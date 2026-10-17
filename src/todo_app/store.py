@@ -1,0 +1,52 @@
+"""In-memory todo store."""
+
+from dataclasses import dataclass
+
+
+class TodoNotFoundError(KeyError):
+    """Raised when a todo id does not exist."""
+
+
+@dataclass
+class Todo:
+    id: int
+    title: str
+    done: bool = False
+
+
+class TodoStore:
+    """Keeps todos in memory, keyed by an auto-incrementing id."""
+
+    def __init__(self) -> None:
+        self._todos: dict[int, Todo] = {}
+        self._next_id = 1
+
+    def add(self, title: str) -> Todo:
+        title = title.strip()
+        if not title:
+            raise ValueError("title must not be empty")
+        todo = Todo(id=self._next_id, title=title)
+        self._todos[todo.id] = todo
+        self._next_id += 1
+        return todo
+
+    def get(self, todo_id: int) -> Todo:
+        try:
+            return self._todos[todo_id]
+        except KeyError:
+            raise TodoNotFoundError(todo_id) from None
+
+    def complete(self, todo_id: int) -> Todo:
+        todo = self.get(todo_id)
+        todo.done = True
+        return todo
+
+    def remove(self, todo_id: int) -> None:
+        self.get(todo_id)
+        del self._todos[todo_id]
+
+    def list(self, *, include_done: bool = True) -> list[Todo]:
+        todos = sorted(self._todos.values(), key=lambda t: t.id)
+        if include_done:
+            return todos
+        return [t for t in todos if not t.done]
