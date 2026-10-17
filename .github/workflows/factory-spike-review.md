@@ -1,5 +1,5 @@
 ---
-description: "P0 spike: issue-triggered review that approves (GITHUB_TOKEN identity) and merges the linked PR into the story branch"
+description: "P0 spike: issue-triggered review (COMMENT) that merges the linked PR into the story branch"
 on:
   issues:
     types: [labeled]
@@ -53,10 +53,12 @@ steps:
       done
       cat /tmp/gh-aw/agent/linked_pr.json
 safe-outputs:
+  # COMMENT only: the App opened the PR and GitHub forbids APPROVE/REQUEST_CHANGES on your own PR. A per-handler
+  # github-token from a secret is not an option either (gh-aw 0.92.4 embeds it in the agent-side config and secret
+  # redaction then fails the run). The verdict lives in the issue labels; the merge gate needs no approval.
   submit-pull-request-review:
     target: "*"
-    allowed-events: [APPROVE, COMMENT, REQUEST_CHANGES]
-    github-token: ${{ secrets.GITHUB_TOKEN }}
+    allowed-events: [COMMENT]
   merge-pull-request:
     target: "*"
     allowed-branches: ["sub/*"]
@@ -79,7 +81,7 @@ If the file contains no pull request, remove the label `factory:spike_review`, c
 Otherwise, for the first pull request in the file:
 
 1. Look at its diff. It should only add one marker file under `spike/`.
-2. Submit a review with event `APPROVE` and body `Spike review: marker file looks correct.`
+2. Submit a review with event `COMMENT` and body `Spike review: approved - marker file looks correct.`
 3. Merge it with merge method `squash`.
 4. Close issue #${{ github.event.issue.number }} as completed.
 5. Remove the label `factory:spike_review` and add the label `factory:spike_done`.
