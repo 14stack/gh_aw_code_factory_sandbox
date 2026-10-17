@@ -12,6 +12,14 @@ models:
   default-ai-credits-pricing:
     input: 0.1
     output: 0.35
+# Workaround for a gh-aw 0.92.4 bug (P0 finding F8): safeoutputs is always mounted as a shell CLI, and each CLI call
+# appends to /tmp/gh-aw/mcp-cli-audit/safeoutputs.jsonl. Secret redaction mistakes that audit log for safe-output
+# records (same file name), deletes it and fails the agent job, so every safe output of the run is lost.
+# Occupying the path with a directory makes the (best-effort, try/catch) audit write fail harmlessly.
+# Remove once gh-aw no longer matches mcp-cli-audit/safeoutputs.jsonl in redact_secrets.
+pre-agent-steps:
+  - name: Guard safe-output redaction against the CLI audit log (gh-aw F8 workaround)
+    run: mkdir -p /tmp/gh-aw/mcp-cli-audit/safeoutputs.jsonl
 ---
 
 ## Factory conventions
@@ -19,3 +27,5 @@ models:
 - You are one agent in the gh_aw_code_factory pipeline. State lives in issue labels and issue bodies.
 - **Never communicate through issue comments.** Write to the issue body or use the configured safe outputs only.
 - Only change the labels you are explicitly told to change.
+- Call safe-output tools (labels, issue updates, PRs, reviews, merges) **directly as MCP tools**. Do not run the
+  `safeoutputs` shell command, and pass only the parameters the tool schema lists.

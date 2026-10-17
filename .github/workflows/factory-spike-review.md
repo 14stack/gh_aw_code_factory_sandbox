@@ -83,7 +83,7 @@ Otherwise, for the first pull request in the file:
 1. Look at its diff. It should only add one marker file under `spike/`.
 2. Submit a review with event `COMMENT` and body `Spike review: approved - marker file looks correct.`
 3. Merge it with merge method `squash`.
-4. Close issue #${{ github.event.issue.number }} as completed.
+4. Close issue #${{ github.event.issue.number }} (the close reason is fixed by configuration; do not pass `state_reason`).
 5. Remove the label `factory:spike_review` and add the label `factory:spike_done`.
 
 Do nothing else.
