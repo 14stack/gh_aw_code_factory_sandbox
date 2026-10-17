@@ -1,6 +1,6 @@
 ---
 # Shared configuration imported by every factory agent workflow (SPEC §9).
-engine: copilot
+# Note: imports cannot carry `engine:` settings, so each workflow declares its own BYOK engine block.
 github-app:
   client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
   private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
