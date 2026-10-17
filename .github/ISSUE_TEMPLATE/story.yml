@@ -1,0 +1,27 @@
+name: Story
+description: Work for the code factory. The AI refiner turns it into a refined story and asks its questions in the issue body.
+labels: ["factory:refinement_requires_ai_review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe what you want in your own words. The AI refiner rewrites this issue into *Background*,
+        *Business requirements*, *Technical details*, *QA* and *Open questions to human*.
+
+        **How to answer the refiner:** edit the issue body, write your answer after each `**Answer:**` line, then
+        add the label `factory:refinement_requires_ai_review` again. Please don't use comments; the factory doesn't
+        read them.
+  - type: textarea
+    id: story
+    attributes:
+      label: What should be built, and why?
+      description: The problem, who it is for, and what "done" looks like. Rough is fine.
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Constraints, examples, links, things that are explicitly out of scope.
+    validations:
+      required: false
