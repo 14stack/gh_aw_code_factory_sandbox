@@ -1,5 +1,5 @@
-# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"7c0f4837e33f0b7b536df0f1b7f8a755b8ef2fc87ca3e9e71ab700b40b29b305","body_hash":"0d4a10525c581239022494b1e10bc072f0550febc90e42321389f225b902e71e","compiler_version":"v0.92.4","strict":true,"engine_base_url_customized":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.98"}}
-# gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","FACTORY_APP_PRIVATE_KEY","GH_AW_DEFAULT_OTLP_ENDPOINT","GH_AW_DEFAULT_OTLP_HEADERS","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN","OPENROUTER_API_KEY"],"actions":[{"repo":"actions/checkout","sha":"3d3c42e5aac5ba805825da76410c181273ba90b1","version":"v7.0.1"},{"repo":"actions/create-github-app-token","sha":"64ab729a6294000f5aa4a4bc0b73d1f32bc45510","version":"v3.3.0"},{"repo":"actions/download-artifact","sha":"9000827ccba6bdab643e8b6fd33ac0654aef8333","version":"v8.0.2"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"949feb2413d6458794dcd2491c4babbbce0c15c1","version":"v7.1.0"},{"repo":"actions/upload-artifact","sha":"cf430e030ddbb5b0abf93d22962f4752f3646cd9","version":"v7.0.2"},{"repo":"github/gh-aw-actions/setup","sha":"v0.92.4","version":"v0.92.4"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.28.59","digest":"sha256:63a1cba05e97ede7fc08cc8abb91167045c998d4415433e9c87377e9266ec291","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.28.59@sha256:63a1cba05e97ede7fc08cc8abb91167045c998d4415433e9c87377e9266ec291"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.59","digest":"sha256:f3d7842f34ff1778ac024a8918519b12436d6437b82d6d1d8cee1d01b2ac87e2","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.59@sha256:f3d7842f34ff1778ac024a8918519b12436d6437b82d6d1d8cee1d01b2ac87e2"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.28.59","digest":"sha256:e815a456d6050564666cb2a8bb04ff11a4babc2bfa746d611e895b87e59f9af0","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.28.59@sha256:e815a456d6050564666cb2a8bb04ff11a4babc2bfa746d611e895b87e59f9af0"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.4.33","digest":"sha256:2b278f891b4566d27494658b37f628810f93da4caf510e266892ca344e55f8e0","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.4.33@sha256:2b278f891b4566d27494658b37f628810f93da4caf510e266892ca344e55f8e0"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f","pinned_image":"ghcr.io/github/gh-aw-node@sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f"},{"image":"ghcr.io/github/github-mcp-server:v2.0.2","digest":"sha256:ffced0d76e77428532a2ced185516992d77fd146d69eec2f244e6237d1a97796","pinned_image":"ghcr.io/github/github-mcp-server:v2.0.2@sha256:ffced0d76e77428532a2ced185516992d77fd146d69eec2f244e6237d1a97796"}],"mcp_servers":[{"name":"github","tools":["get_pull_request","get_pull_request_comments","get_pull_request_diff","get_pull_request_files","get_pull_request_review_comments","get_pull_request_reviews","get_pull_request_status","issue_read","list_issue_types","list_issues","list_pull_requests","pull_request_read","search_issues","search_pull_requests"]},{"name":"safeoutputs","tools":["add_labels","close_issue","merge_pull_request","missing_data","missing_tool","noop","remove_labels","report_incomplete","submit_pull_request_review"]}],"threat_detection":{"mode":"enabled"}}
+# gh-aw-metadata: {"schema_version":"v4","frontmatter_hash":"5bb50aad8874753cb382153fd8708a1f1a9c5023c6a82ba1fdeca5495619696a","body_hash":"b4097d2fa8effe348fa1c8db7d5918e4cc502c45105a0c06f005783abbecfee5","compiler_version":"v0.92.4","strict":true,"engine_base_url_customized":true,"agent_id":"copilot","engine_versions":{"copilot":"1.0.98"}}
+# gh-aw-manifest: {"version":1,"secrets":["COPILOT_GITHUB_TOKEN","FACTORY_APP_PRIVATE_KEY","GH_AW_DEFAULT_OTLP_ENDPOINT","GH_AW_DEFAULT_OTLP_HEADERS","GH_AW_GITHUB_MCP_SERVER_TOKEN","GH_AW_GITHUB_TOKEN","GITHUB_TOKEN","OPENROUTER_API_KEY"],"actions":[{"repo":"actions/checkout","sha":"3d3c42e5aac5ba805825da76410c181273ba90b1","version":"v7.0.1"},{"repo":"actions/create-github-app-token","sha":"64ab729a6294000f5aa4a4bc0b73d1f32bc45510","version":"v3.3.0"},{"repo":"actions/download-artifact","sha":"9000827ccba6bdab643e8b6fd33ac0654aef8333","version":"v8.0.2"},{"repo":"actions/github-script","sha":"3a2844b7e9c422d3c10d287c895573f7108da1b3","version":"v9.0.0"},{"repo":"actions/setup-node","sha":"949feb2413d6458794dcd2491c4babbbce0c15c1","version":"v7.1.0"},{"repo":"actions/upload-artifact","sha":"cf430e030ddbb5b0abf93d22962f4752f3646cd9","version":"v7.0.2"},{"repo":"github/gh-aw-actions/setup","sha":"v0.92.4","version":"v0.92.4"}],"containers":[{"image":"ghcr.io/github/gh-aw-firewall/agent:0.28.59","digest":"sha256:63a1cba05e97ede7fc08cc8abb91167045c998d4415433e9c87377e9266ec291","pinned_image":"ghcr.io/github/gh-aw-firewall/agent:0.28.59@sha256:63a1cba05e97ede7fc08cc8abb91167045c998d4415433e9c87377e9266ec291"},{"image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.59","digest":"sha256:f3d7842f34ff1778ac024a8918519b12436d6437b82d6d1d8cee1d01b2ac87e2","pinned_image":"ghcr.io/github/gh-aw-firewall/api-proxy:0.28.59@sha256:f3d7842f34ff1778ac024a8918519b12436d6437b82d6d1d8cee1d01b2ac87e2"},{"image":"ghcr.io/github/gh-aw-firewall/squid:0.28.59","digest":"sha256:e815a456d6050564666cb2a8bb04ff11a4babc2bfa746d611e895b87e59f9af0","pinned_image":"ghcr.io/github/gh-aw-firewall/squid:0.28.59@sha256:e815a456d6050564666cb2a8bb04ff11a4babc2bfa746d611e895b87e59f9af0"},{"image":"ghcr.io/github/gh-aw-mcpg:v0.4.33","digest":"sha256:2b278f891b4566d27494658b37f628810f93da4caf510e266892ca344e55f8e0","pinned_image":"ghcr.io/github/gh-aw-mcpg:v0.4.33@sha256:2b278f891b4566d27494658b37f628810f93da4caf510e266892ca344e55f8e0"},{"image":"ghcr.io/github/gh-aw-node","digest":"sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f","pinned_image":"ghcr.io/github/gh-aw-node@sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f"},{"image":"ghcr.io/github/github-mcp-server:v2.0.2","digest":"sha256:ffced0d76e77428532a2ced185516992d77fd146d69eec2f244e6237d1a97796","pinned_image":"ghcr.io/github/github-mcp-server:v2.0.2@sha256:ffced0d76e77428532a2ced185516992d77fd146d69eec2f244e6237d1a97796"}],"mcp_servers":[{"name":"github","tools":["get_pull_request","get_pull_request_comments","get_pull_request_diff","get_pull_request_files","get_pull_request_review_comments","get_pull_request_reviews","get_pull_request_status","issue_read","list_issue_types","list_issues","list_pull_requests","pull_request_read","search_issues","search_pull_requests"]},{"name":"safeoutputs","tools":["add_labels","missing_data","missing_tool","noop","remove_labels","report_incomplete","submit_pull_request_review"]}],"threat_detection":{"mode":"enabled"}}
 # This file was automatically generated by gh-aw. DO NOT EDIT. To debug this workflow, load the skill at https://github.com/github/gh-aw/blob/main/debug.md
 #
 #    ___                   _   _
@@ -23,7 +23,7 @@
 #
 # For more information: https://github.github.com/gh-aw/introduction/overview/
 #
-# P0 spike: issue-triggered review (COMMENT) that merges the linked PR into the story branch
+# P0 spike: issue-triggered review (COMMENT) of the linked PR; the verdict label hands off to the deterministic merge
 #
 # Resolved workflow manifest:
 #   Imports:
@@ -56,7 +56,7 @@
 #   - ghcr.io/github/gh-aw-node@sha256:11c2c544876cdbaffefe0f7f1283b74838c209654b4934a78e23ed11f750490f
 #   - ghcr.io/github/github-mcp-server:v2.0.2@sha256:ffced0d76e77428532a2ced185516992d77fd146d69eec2f244e6237d1a97796
 
-name: "P0 spike — review and merge the linked PR"
+name: "P0 spike — review the linked PR"
 on:
   # bots: # Bots processed as bot check in pre-activation job
   # - gh-aw-code-factory # Bots processed as bot check in pre-activation job
@@ -73,12 +73,12 @@ concurrency:
   group: "gh-aw-${{ github.workflow }}-${{ github.event.issue.number || github.run_id }}"
   queue: max
 
-run-name: "P0 spike — review and merge the linked PR"
+run-name: "P0 spike — review the linked PR"
 
 env:
   OTEL_EXPORTER_OTLP_ENDPOINT: ${{ secrets.GH_AW_DEFAULT_OTLP_ENDPOINT || vars.GH_AW_DEFAULT_OTLP_ENDPOINT }}
   OTEL_SERVICE_NAME: gh-aw.factory-spike-review
-  OTEL_RESOURCE_ATTRIBUTES: 'gh-aw.workflow.name=P0%20spike%20%E2%80%94%20review%20and%20merge%20the%20linked%20PR,gh-aw.repository=${{ github.repository }},gh-aw.run.id=${{ github.run_id }},github.run_id=${{ github.run_id }},gh-aw.engine.id=copilot'
+  OTEL_RESOURCE_ATTRIBUTES: 'gh-aw.workflow.name=P0%20spike%20%E2%80%94%20review%20the%20linked%20PR,gh-aw.repository=${{ github.repository }},gh-aw.run.id=${{ github.run_id }},github.run_id=${{ github.run_id }},gh-aw.engine.id=copilot'
   OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.GH_AW_DEFAULT_OTLP_HEADERS }}
   GH_AW_OTLP_ENDPOINTS: '[{"url":"${{ secrets.GH_AW_DEFAULT_OTLP_ENDPOINT || vars.GH_AW_DEFAULT_OTLP_ENDPOINT }}","headers":"${{ secrets.GH_AW_DEFAULT_OTLP_HEADERS }}"}]'
   GH_AW_OTLP_IF_MISSING: ignore
@@ -132,7 +132,7 @@ jobs:
           parent-span-id: ${{ needs.pre_activation.outputs.setup-parent-span-id || needs.pre_activation.outputs.setup-span-id }}
           safe-output-artifact-client: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/factory-spike-review.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.98"
           GH_AW_INFO_AWF_VERSION: "v0.28.59"
@@ -147,7 +147,7 @@ jobs:
           GH_AW_INFO_MODEL: ${{ vars.GH_AW_MODEL_AGENT_COPILOT || vars.GH_AW_DEFAULT_MODEL_COPILOT || 'auto' }}
           GH_AW_INFO_VERSION: "1.0.98"
           GH_AW_INFO_AGENT_VERSION: "1.0.98"
-          GH_AW_INFO_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_INFO_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_INFO_EXPERIMENTAL: "false"
           GH_AW_INFO_SUPPORTS_TOOLS_ALLOWLIST: "true"
           GH_AW_INFO_STAGED: "false"
@@ -200,7 +200,7 @@ jobs:
         if: ${{ env.GH_AW_MAX_DAILY_AI_CREDITS != '' }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_WORKFLOW_ID: "factory-spike-review"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_WORKFLOW_DISPATCH_AW_CONTEXT: ${{ github.event.inputs.aw_context || '' }}
@@ -319,7 +319,7 @@ jobs:
           GH_AW_GITHUB_RUN_ID: ${{ github.run_id }}
           GH_AW_GITHUB_WORKSPACE: ${{ github.workspace }}
           GH_AW_PROMPT_CONTENT_0000: "<system>\n"
-          GH_AW_PROMPT_CONTENT_0001: "<safe-output-tools>\nTools: close_issue, submit_pull_request_review, add_labels, remove_labels, missing_tool, missing_data, noop(max:2)\n"
+          GH_AW_PROMPT_CONTENT_0001: "<safe-output-tools>\nTools: submit_pull_request_review, add_labels, remove_labels, missing_tool, missing_data, noop(max:2)\n"
           GH_AW_PROMPT_CONTENT_0002: "</safe-output-tools>\n"
           GH_AW_PROMPT_CONTENT_0003: "<github-context>\nThe following GitHub context information is available for this workflow:\n{{#if github.actor}}\n- **actor**: __GH_AW_GITHUB_ACTOR__\n{{/if}}\n{{#if github.repository}}\n- **repository**: __GH_AW_GITHUB_REPOSITORY__\n{{/if}}\n{{#if github.workspace}}\n- **workspace**: __GH_AW_GITHUB_WORKSPACE__\n{{/if}}\n{{#if github.event.issue.number || (github.aw.context.item_type == 'issue' && github.aw.context.item_number)}}\n- **issue-number**: #__GH_AW_EXPR_7C248226__\n{{/if}}\n{{#if github.event.discussion.number || (github.aw.context.item_type == 'discussion' && github.aw.context.item_number)}}\n- **discussion-number**: #__GH_AW_EXPR_C19C384F__\n{{/if}}\n{{#if github.event.pull_request.number || (github.aw.context.item_type == 'pull_request' && github.aw.context.item_number)}}\n- **pull-request-number**: #__GH_AW_EXPR_76DF9333__\n{{/if}}\n{{#if github.event.comment.id || github.aw.context.comment_id}}\n- **comment-id**: __GH_AW_EXPR_77C1A4D2__\n{{/if}}\n{{#if github.run_id}}\n- **workflow-run-id**: __GH_AW_GITHUB_RUN_ID__\n{{/if}}\n</github-context>\n\n"
           GH_AW_PROMPT_CONTENT_0004: "</system>\n"
@@ -507,7 +507,7 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/factory-spike-review.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.98"
           GH_AW_INFO_AWF_VERSION: "v0.28.59"
@@ -640,7 +640,7 @@ jobs:
         env:
           GH_AW_FILE_ROOT: "${{ runner.temp }}/gh-aw"
           GH_AW_FILE_CONFIG: "{\"files\":[{\"path\":\"safeoutputs/config.json\",\"content_env\":\"GH_AW_SAFE_OUTPUTS_CONFIG\"}]}"
-          GH_AW_SAFE_OUTPUTS_CONFIG: "{\"add_labels\":{\"allowed\":[\"factory:spike_done\"]},\"close_issue\":{\"max\":1,\"state_reason\":\"completed\"},\"create_report_incomplete_issue\":{},\"merge_pull_request\":{\"allowed_branches\":[\"sub/*\"],\"max\":1,\"target\":\"*\"},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":2,\"report-as-issue\":\"false\"},\"remove_labels\":{\"allowed\":[\"factory:spike_review\"]},\"report_incomplete\":{},\"submit_pull_request_review\":{\"allowed_events\":[\"COMMENT\"],\"max\":1,\"target\":\"*\"}}"
+          GH_AW_SAFE_OUTPUTS_CONFIG: "{\"add_labels\":{\"allowed\":[\"factory:spike_merge\"]},\"create_report_incomplete_issue\":{},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":2,\"report-as-issue\":\"false\"},\"remove_labels\":{\"allowed\":[\"factory:spike_review\"]},\"report_incomplete\":{},\"submit_pull_request_review\":{\"allowed_events\":[\"COMMENT\"],\"max\":1,\"target\":\"*\"}}"
         with:
           script: |
             const path = require('path');
@@ -654,8 +654,7 @@ jobs:
           GH_AW_TOOLS_META_JSON: |
             {
               "description_suffixes": {
-                "add_labels": " CONSTRAINTS: Maximum 5 add_labels call(s) allowed. Maximum 10 label(s) per call. Only these labels are allowed: [\"factory:spike_done\"].",
-                "close_issue": " CONSTRAINTS: Maximum 1 issue(s) can be closed.",
+                "add_labels": " CONSTRAINTS: Maximum 5 add_labels call(s) allowed. Maximum 10 label(s) per call. Only these labels are allowed: [\"factory:spike_merge\"].",
                 "remove_labels": " CONSTRAINTS: Only these labels can be removed: [factory:spike_review].",
                 "submit_pull_request_review": " CONSTRAINTS: Maximum 1 review(s) can be submitted. Target: *."
               },
@@ -687,82 +686,6 @@ jobs:
                   "labels": {
                     "required": true,
                     "type": "array"
-                  },
-                  "repo": {
-                    "type": "string",
-                    "maxLength": 256
-                  }
-                }
-              },
-              "close_issue": {
-                "defaultMax": 1,
-                "fields": {
-                  "body": {
-                    "type": "string",
-                    "sanitize": true,
-                    "maxLength": 65000
-                  },
-                  "confidence": {
-                    "type": "string",
-                    "enum": [
-                      "LOW",
-                      "MEDIUM",
-                      "HIGH"
-                    ],
-                    "x-strip-on-error": true
-                  },
-                  "duplicate_of": {
-                    "issueOrPRNumber": true
-                  },
-                  "issue_number": {
-                    "optionalPositiveInteger": true
-                  },
-                  "rationale": {
-                    "type": "string",
-                    "sanitize": true,
-                    "maxLength": 280,
-                    "x-strip-on-error": true
-                  },
-                  "repo": {
-                    "type": "string",
-                    "maxLength": 256
-                  },
-                  "state_reason": {
-                    "type": "string",
-                    "enum": [
-                      "completed",
-                      "not_planned",
-                      "duplicate"
-                    ]
-                  },
-                  "suggest": {
-                    "type": "boolean"
-                  }
-                }
-              },
-              "merge_pull_request": {
-                "defaultMax": 1,
-                "fields": {
-                  "commit_message": {
-                    "type": "string",
-                    "sanitize": true,
-                    "maxLength": 65000
-                  },
-                  "commit_title": {
-                    "type": "string",
-                    "sanitize": true,
-                    "maxLength": 256
-                  },
-                  "merge_method": {
-                    "type": "string",
-                    "enum": [
-                      "merge",
-                      "squash",
-                      "rebase"
-                    ]
-                  },
-                  "pull_request_number": {
-                    "issueOrPRNumber": true
                   },
                   "repo": {
                     "type": "string",
@@ -1405,7 +1328,6 @@ jobs:
     # Permissions for the conclusion job (workflow permissions default to none).
     permissions:
       actions: read
-      contents: write
       issues: write
       pull-requests: write
     concurrency:
@@ -1433,7 +1355,7 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/factory-spike-review.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.98"
           GH_AW_INFO_AWF_VERSION: "v0.28.59"
@@ -1447,7 +1369,6 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           github-api-url: ${{ github.api_url }}
-          permission-contents: write
           permission-issues: write
           permission-pull-requests: write
       - name: Download agent output artifact
@@ -1496,7 +1417,7 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_NOOP_MAX: "2"
-          GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/factory-spike-review.md"
           GH_AW_ENGINE_ID: "copilot"
           GH_AW_ENGINE_MODEL: ${{ needs.agent.outputs.model }}
@@ -1521,7 +1442,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/factory-spike-review.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_DETECTION_CONCLUSION: ${{ needs.detection.outputs.detection_conclusion }}
@@ -1541,7 +1462,7 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_MISSING_TOOL_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/factory-spike-review.md"
           GH_AW_ENGINE_ID: "copilot"
           GH_AW_ENGINE_MODEL: ${{ needs.agent.outputs.model }}
@@ -1560,7 +1481,7 @@ jobs:
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
           GH_AW_REPORT_INCOMPLETE_CREATE_ISSUE: "true"
-          GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/factory-spike-review.md"
           GH_AW_ENGINE_ID: "copilot"
           GH_AW_ENGINE_MODEL: ${{ needs.agent.outputs.model }}
@@ -1579,7 +1500,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/factory-spike-review.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_AGENT_CONCLUSION: ${{ needs.agent.result }}
@@ -1638,7 +1559,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_AGENT_OUTPUT: ${{ steps.setup-agent-output-env.outputs.GH_AW_AGENT_OUTPUT }}
-          GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/factory-spike-review.md"
           GH_AW_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           GH_AW_REPORT_FAILED_JOBS: "true"
@@ -1775,7 +1696,7 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/factory-spike-review.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.98"
           GH_AW_INFO_AWF_VERSION: "v0.28.59"
@@ -1852,8 +1773,8 @@ jobs:
         if: always() && steps.detection_guard.outputs.run_detection == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
-          WORKFLOW_DESCRIPTION: "P0 spike: issue-triggered review (COMMENT) that merges the linked PR into the story branch"
+          WORKFLOW_NAME: "P0 spike — review the linked PR"
+          WORKFLOW_DESCRIPTION: "P0 spike: issue-triggered review (COMMENT) of the linked PR; the verdict label hands off to the deterministic merge"
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
           GH_AW_DETECTION_CONTINUE_ON_ERROR: "true"
           GH_AW_DETECTION_SKIP_PROMPT_SUMMARY: "true"
@@ -1924,8 +1845,8 @@ jobs:
           GIT_COMMITTER_NAME: github-actions[bot]
           RUNNER_TEMP: ${{ runner.temp }}
           TRACEPARENT: ${{ env.GITHUB_AW_OTEL_TRACE_ID != '' && env.GITHUB_AW_OTEL_PARENT_SPAN_ID != '' && format('00-{0}-{1}-01', env.GITHUB_AW_OTEL_TRACE_ID, env.GITHUB_AW_OTEL_PARENT_SPAN_ID) || '' }}
-          WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
-          WORKFLOW_DESCRIPTION: "P0 spike: issue-triggered review (COMMENT) that merges the linked PR into the story branch"
+          WORKFLOW_NAME: "P0 spike — review the linked PR"
+          WORKFLOW_DESCRIPTION: "P0 spike: issue-triggered review (COMMENT) of the linked PR; the verdict label hands off to the deterministic merge"
           HAS_PATCH: ${{ needs.agent.outputs.has_patch }}
           GH_AW_DETECTION_CONTINUE_ON_ERROR: "true"
         run: |
@@ -2061,7 +1982,7 @@ jobs:
           destination: ${{ runner.temp }}/gh-aw/actions
           job-name: ${{ github.job }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/factory-spike-review.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.98"
           GH_AW_INFO_AWF_VERSION: "v0.28.59"
@@ -2092,7 +2013,6 @@ jobs:
     runs-on: ubuntu-slim
     # Permissions for the safe_outputs job (workflow permissions default to none).
     permissions:
-      contents: write
       issues: write
       pull-requests: write
     timeout-minutes: 45
@@ -2108,7 +2028,7 @@ jobs:
       GH_AW_RUNTIME_FEATURES: ${{ vars.GH_AW_RUNTIME_FEATURES }}
       GH_AW_THREAT_DETECTION_AIC: ${{ needs.detection.outputs.aic }}
       GH_AW_WORKFLOW_ID: "factory-spike-review"
-      GH_AW_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+      GH_AW_WORKFLOW_NAME: "P0 spike — review the linked PR"
       GH_AW_WORKFLOW_SOURCE_URL: "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.github/workflows/factory-spike-review.md"
     outputs:
       app_token_minting_failed: ${{ steps.safe-outputs-app-token.outcome == 'failure' }}
@@ -2135,7 +2055,7 @@ jobs:
           trace-id: ${{ needs.activation.outputs.setup-trace-id }}
           parent-span-id: ${{ needs.activation.outputs.setup-parent-span-id || needs.activation.outputs.setup-span-id }}
         env:
-          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review and merge the linked PR"
+          GH_AW_SETUP_WORKFLOW_NAME: "P0 spike — review the linked PR"
           GH_AW_CURRENT_WORKFLOW_REF: ${{ github.repository }}/.github/workflows/factory-spike-review.lock.yml@${{ github.ref }}
           GH_AW_INFO_VERSION: "1.0.98"
           GH_AW_INFO_AWF_VERSION: "v0.28.59"
@@ -2168,7 +2088,6 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           github-api-url: ${{ github.api_url }}
-          permission-contents: write
           permission-issues: write
           permission-pull-requests: write
       - name: Configure GH_HOST for enterprise compatibility
@@ -2191,7 +2110,7 @@ jobs:
           GH_AW_ALLOWED_DOMAINS: "api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,openrouter.ai,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,ppa.launchpad.net,s.symcb.com,s.symcd.com,security.ubuntu.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,www.googleapis.com"
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_labels\":{\"allowed\":[\"factory:spike_done\"]},\"close_issue\":{\"max\":1,\"state_reason\":\"completed\"},\"create_report_incomplete_issue\":{},\"merge_pull_request\":{\"allowed_branches\":[\"sub/*\"],\"max\":1,\"target\":\"*\"},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":2,\"report-as-issue\":\"false\"},\"remove_labels\":{\"allowed\":[\"factory:spike_review\"]},\"report_incomplete\":{},\"submit_pull_request_review\":{\"allowed_events\":[\"COMMENT\"],\"max\":1,\"target\":\"*\"}}"
+          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: "{\"add_labels\":{\"allowed\":[\"factory:spike_merge\"]},\"create_report_incomplete_issue\":{},\"missing_data\":{},\"missing_tool\":{},\"noop\":{\"max\":2,\"report-as-issue\":\"false\"},\"remove_labels\":{\"allowed\":[\"factory:spike_review\"]},\"report_incomplete\":{},\"submit_pull_request_review\":{\"allowed_events\":[\"COMMENT\"],\"max\":1,\"target\":\"*\"}}"
           GH_AW_GITHUB_TOKEN_SOURCE: "app"
         with:
           github-token: ${{ steps.safe-outputs-app-token.outputs.token }}

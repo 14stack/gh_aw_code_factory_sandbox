@@ -1,5 +1,5 @@
 ---
-description: "P0 spike: issue-triggered review (COMMENT) that merges the linked PR into the story branch"
+description: "P0 spike: issue-triggered review (COMMENT) of the linked PR; the verdict label hands off to the deterministic merge"
 on:
   issues:
     types: [labeled]
@@ -59,18 +59,13 @@ safe-outputs:
   submit-pull-request-review:
     target: "*"
     allowed-events: [COMMENT]
-  merge-pull-request:
-    target: "*"
-    allowed-branches: ["sub/*"]
-  close-issue:
-    state-reason: completed
   add-labels:
-    allowed: ["factory:spike_done"]
+    allowed: ["factory:spike_merge"]
   remove-labels:
     allowed: ["factory:spike_review"]
 ---
 
-# P0 spike — review and merge the linked PR
+# P0 spike — review the linked PR
 
 `/tmp/gh-aw/agent/linked_pr.json` contains the open pull request(s) linked to issue
 #${{ github.event.issue.number }} (body contains `Part of #${{ github.event.issue.number }}`, base is a `story/*`
@@ -82,8 +77,7 @@ Otherwise, for the first pull request in the file:
 
 1. Look at its diff. It should only add one marker file under `spike/`.
 2. Submit a review with event `COMMENT` and body `Spike review: approved - marker file looks correct.`
-3. Merge it with merge method `squash`.
-4. Close issue #${{ github.event.issue.number }} (the close reason is fixed by configuration; do not pass `state_reason`).
-5. Remove the label `factory:spike_review` and add the label `factory:spike_done`.
+3. Remove the label `factory:spike_review` and add the label `factory:spike_merge` to issue
+   #${{ github.event.issue.number }}. A deterministic workflow then merges the PR. Do **not** merge it yourself.
 
 Do nothing else.
