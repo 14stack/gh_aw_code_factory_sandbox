@@ -1,0 +1,44 @@
+# P0 spike utility (deterministic, no AI): add/remove a label on an issue using the factory GitHub App token.
+# Tests whether App-made label events trigger gh-aw agent workflows (risk 1) - the same path the orchestrator uses.
+name: "P0 spike: label via factory App"
+
+on:
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Issue number"
+        required: true
+        type: number
+      add:
+        description: "Label to add"
+        required: false
+        type: string
+      remove:
+        description: "Label to remove"
+        required: false
+        type: string
+
+permissions: {}
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint factory App token
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-issues: write
+      - name: Change labels
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          ISSUE: ${{ inputs.issue }}
+          ADD: ${{ inputs.add }}
+          REMOVE: ${{ inputs.remove }}
+        run: |
+          if [ -n "$REMOVE" ]; then gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --remove-label "$REMOVE"; fi
+          if [ -n "$ADD" ]; then gh issue edit "$ISSUE" --repo "$GITHUB_REPOSITORY" --add-label "$ADD"; fi
