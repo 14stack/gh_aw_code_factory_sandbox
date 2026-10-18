@@ -1,0 +1,72 @@
+# Factory orchestrator (SPEC §9.3): deterministic, no AI. Moves sub-issues through the DAG, merges approved PRs into
+# the story branch, marks the story PR ready, and finishes the story after the human merge.
+# Circuit breaker: Actions variables ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT / ORCHESTRATOR_ENABLE_AUTO_MERGE (unset = off).
+name: "Factory: orchestrator"
+
+on:
+  issues:
+    types: [labeled, closed]
+  pull_request:
+    types: [closed]
+  schedule:
+    - cron: "*/30 * * * *"  # safety net; events do the real work
+  workflow_dispatch:
+    inputs:
+      story:
+        description: "Story issue number (empty: only sweep)"
+        required: false
+
+permissions: {}
+
+# One run at a time, repo-wide. GitHub keeps only the newest pending run, so every run also sweeps all stories.
+concurrency:
+  group: factory-orchestrator
+  cancel-in-progress: false
+
+jobs:
+  orchestrate:
+    if: >-
+      github.event_name != 'issues' || github.event.action == 'closed' ||
+      contains(fromJSON('["factory:sub_issue_pr_approved","factory:sub_issue_done","factory:story_in_progress"]'),
+      github.event.label.name)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Mint factory App token
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |-
+            ${{ github.event.repository.name }}
+            gh_aw_code_factory
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+          permission-checks: read
+      - name: Check out factory helpers
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/gh_aw_code_factory
+          ref: ${{ vars.FACTORY_REF || 'claude/charming-knuth-6m2xdz' }}
+          token: ${{ steps.app.outputs.token }}
+          path: .factory
+          persist-credentials: false
+      - name: Orchestrate
+        working-directory: .factory
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT: ${{ vars.ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT }}
+          ORCHESTRATOR_ENABLE_AUTO_MERGE: ${{ vars.ORCHESTRATOR_ENABLE_AUTO_MERGE }}
+          ISSUE: ${{ github.event.issue.number }}
+          PR: ${{ github.event.pull_request.number }}
+          STORY: ${{ inputs.story }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          args=(--repo "$GITHUB_REPOSITORY" --sweep --run-url "$RUN_URL")
+          [ -n "$ISSUE" ] && args+=(--issue "$ISSUE")
+          [ -n "$PR" ] && args+=(--pr "$PR")
+          [ -n "$STORY" ] && args+=(--story "$STORY")
+          python3 -m agents.ai_orchestrator.orchestrate "${args[@]}"
