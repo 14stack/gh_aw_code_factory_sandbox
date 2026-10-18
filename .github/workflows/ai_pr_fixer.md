@@ -259,11 +259,13 @@ ${{ github.repository }} needs changes. Its branch is checked out.
 2. Fix every unresolved review thread and every failed check. If the PR conflicts with its base branch, merge it:
    `git fetch origin <base_branch> && git merge origin/<base_branch>`, resolve the conflicts, and commit.
 3. Run the lint, format and test commands from `AGENTS.md` until all pass.
-4. Commit (`git add -A && git commit -m "..."`) and call `push_to_pull_request_branch` with the
-   `pull_request_number`.
-5. For each review thread: `reply_to_pull_request_review_comment` (with its `comment_id`) saying what you changed,
-   or why you didn't; then `resolve_pull_request_review_thread` (with its `thread_id`) for the ones you fixed.
-6. Call `report_fix` once with `outcome: fixed` and a one-sentence summary.
+4. Commit (`git add -A && git commit -m "..."`), then call `push_to_pull_request_branch` with exactly these
+   arguments: `repo: "${{ github.repository }}"`, `pull_request_number` (from `pr_number.txt`, as a number),
+   `branch` (the checked-out branch, `git branch --show-current`) and `message` (your commit message).
+5. For each review thread: `reply_to_pull_request_review_comment` (with its `comment_id`, `pull_request_number` and
+   `repo: "${{ github.repository }}"`) saying what you changed, or why you didn't; then
+   `resolve_pull_request_review_thread` (with its `thread_id`) for the ones you fixed.
+6. Call `report_fix` once with `outcome: fixed` and a one-sentence summary, **only if the push succeeded**.
 
 If you can't fix it (the feedback contradicts the sub-issue, or the checks can't be made to pass), don't push: call
 `report_fix` with `outcome: blocked` and the reason. Don't comment on issues or change labels. Never edit

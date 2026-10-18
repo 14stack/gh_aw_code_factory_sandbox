@@ -40,5 +40,7 @@ safe-outputs:
   `safeoutputs` shell command, and pass only the parameters the tool schema lists.
 - If a shell command is denied, **don't retry it**: it will be denied again and burns your turn budget. Use a
   command you are allowed to run, or continue without it.
+- If a safe-output tool returns an error, read it, fix the arguments it names (for example a missing `repo` or
+  `pull_request_number`) and call it again. Never report success for a step whose tool call failed.
 - Never run the same command again without changing something first. If a result surprises you, read the code
   that produced it, edit it, then re-run. Your turn budget is limited; a run that loops on checks fails.
