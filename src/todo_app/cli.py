@@ -10,7 +10,7 @@ from datetime import date
 from todo_app.storage import StorageError, default_path
 from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio", "title"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -74,8 +74,10 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                         error = f"error: invalid interval {token!r}"
                         break
                 elif keyword == "priority":
-                    token = args[i + 1] if i + 1 < len(args) else ""
-                    i += 2 if i + 1 < len(args) else 1
+                    # ``title`` is never a priority, so it stays a command.
+                    has_token = i + 1 < len(args) and args[i + 1] != "title"
+                    token = args[i + 1] if has_token else ""
+                    i += 2 if has_token else 1
                     priority = _parse_priority(token)
                     if priority is None:
                         error = f"error: invalid priority {token!r}"
@@ -145,6 +147,36 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 out.append(f"prio {todo_id}: {priority}")
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
+        elif cmd == "title":
+            # A following command keyword is not an id, so it stays a command.
+            has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+            if not has_token:
+                out.append("error: missing id")
+                i += 1
+                continue
+            token = args[i + 1]
+            todo_id = _parse_id(token)
+            if todo_id is None:
+                out.append(f"error: invalid id {token!r}")
+                i += 2
+                if i < len(args) and args[i] not in _COMMANDS:
+                    i += 1
+                continue
+            # After a valid id the next token is always the title, even a command keyword.
+            title = args[i + 2] if i + 2 < len(args) else ""
+            i += 3
+            if not title:
+                out.append("error: missing title")
+                continue
+            try:
+                todo = store.set_title(todo_id, title)
+            except ValueError:
+                out.append("error: title must not be empty")
+                continue
+            except TodoNotFoundError:
+                out.append(f"error: no todo {todo_id}")
+                continue
+            out.append(f"title {todo_id}: {todo.title}")
         elif cmd == "list":
             priority: str | None = None
             i += 1
