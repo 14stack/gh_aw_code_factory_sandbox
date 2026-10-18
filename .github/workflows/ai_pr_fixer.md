@@ -47,6 +47,7 @@ jobs:
     needs: activation
     runs-on: ubuntu-latest
     outputs:
+      proceed: ${{ steps.prepare.outputs.proceed }}
       pr_number: ${{ steps.prepare.outputs.pr_number }}
       head_ref: ${{ steps.prepare.outputs.head_ref }}
     steps:
@@ -82,9 +83,9 @@ jobs:
   # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
   # agent reported nothing. The first time, retry by re-applying the trigger label; then flag a human.
   on_failure:
-    needs: [agent, detection]
+    needs: [agent, detection, prepare]
     if: >-
-      always() && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
+      always() && needs.prepare.outputs.proceed == 'true' && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
       (needs.agent.result == 'success' && !contains(needs.agent.outputs.output_types, 'report_fix')))
     runs-on: ubuntu-latest
     steps:
@@ -122,7 +123,17 @@ checkout:
   fetch: ["*"]  # push-to-pull-request-branch needs the PR branches; merging the story branch needs it too
   fetch-depth: 0
 steps:
+  # A noop written before the agent starts makes gh-aw exit cleanly without starting the model. GH_AW_SAFE_OUTPUTS is
+  # not in the environment of custom steps, so the path comes from gh-aw's set-runtime-paths step.
+  - name: Skip the agent when the pre-job decided so (no AI credits; the reason is in the Automation log)
+    if: needs.prepare.outputs.proceed != 'true'
+    env:
+      SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
+    run: |
+      mkdir -p "$(dirname "$SAFE_OUTPUTS")"
+      echo '{"type":"noop","message":"Skipped by the deterministic pre-job; see the issue Automation log"}' >> "$SAFE_OUTPUTS"
   - name: Collect the feedback for the agent (review threads, reviews, failed checks)
+    if: needs.prepare.outputs.proceed == 'true'
     env:
       GH_TOKEN: ${{ github.token }}
       ISSUE: ${{ github.event.issue.number }}
@@ -156,9 +167,11 @@ steps:
       done
       wc -l "$out"
   - uses: actions/setup-python@v5
+    if: needs.prepare.outputs.proceed == 'true'
     with:
       python-version: "3.12"
   - name: Install the project's dev dependencies (the agent has no package-index access)
+    if: needs.prepare.outputs.proceed == 'true'
     run: |
       if [ -f .github/factory/setup.sh ]; then bash .github/factory/setup.sh
       elif [ -f pyproject.toml ]; then python -m pip install --quiet -e ".[dev]"
@@ -167,6 +180,9 @@ safe-outputs:
   push-to-pull-request-branch:
     target: "*"
     required-labels: ["factory:managed"]  # only factory PRs
+    # The pre-flight branch-protection lookup needs Administration:read, which the App doesn't have (P0 F10); minting
+    # the token then fails and nothing is pushed. sub/* branches aren't protected; GitHub enforces rules at push time.
+    check-branch-protection: false
   reply-to-pull-request-review-comment:
     target: "*"
     max: 20

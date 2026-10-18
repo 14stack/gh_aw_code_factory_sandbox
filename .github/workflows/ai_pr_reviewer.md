@@ -46,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     outputs:
+      proceed: ${{ steps.prepare.outputs.proceed }}
       pr_number: ${{ steps.prepare.outputs.pr_number }}
       head_ref: ${{ steps.prepare.outputs.head_ref }}
     steps:
@@ -82,9 +83,9 @@ jobs:
   # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
   # agent reported nothing. The first time, retry by re-applying the trigger label; then flag a human.
   on_failure:
-    needs: [agent, detection]
+    needs: [agent, detection, prepare]
     if: >-
-      always() && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
+      always() && needs.prepare.outputs.proceed == 'true' && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
       (needs.agent.result == 'success' && !contains(needs.agent.outputs.output_types, 'report_review')))
     runs-on: ubuntu-latest
     steps:
@@ -120,7 +121,17 @@ jobs:
 checkout:
   ref: ${{ needs.prepare.outputs.head_ref }}
 steps:
+  # A noop written before the agent starts makes gh-aw exit cleanly without starting the model. GH_AW_SAFE_OUTPUTS is
+  # not in the environment of custom steps, so the path comes from gh-aw's set-runtime-paths step.
+  - name: Skip the agent when the pre-job decided so (no AI credits; the reason is in the Automation log)
+    if: needs.prepare.outputs.proceed != 'true'
+    env:
+      SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
+    run: |
+      mkdir -p "$(dirname "$SAFE_OUTPUTS")"
+      echo '{"type":"noop","message":"Skipped by the deterministic pre-job; see the issue Automation log"}' >> "$SAFE_OUTPUTS"
   - name: Save the PR, sub-issue and story for the agent
+    if: needs.prepare.outputs.proceed == 'true'
     env:
       GH_TOKEN: ${{ github.token }}
       ISSUE: ${{ github.event.issue.number }}
