@@ -7,6 +7,7 @@ Example:
 import sys
 from datetime import date
 
+from todo_app.storage import StorageError, default_path
 from todo_app.store import TodoNotFoundError, TodoStore
 
 _COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count"})
@@ -112,7 +113,13 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
 
 
 def main() -> int:
-    for line in run(sys.argv[1:]):
+    path = default_path()
+    try:
+        store = TodoStore(path=path)
+    except StorageError as exc:
+        print(f"error: cannot read {path}: {exc}", file=sys.stderr)
+        return 1
+    for line in run(sys.argv[1:], store):
         print(line)
     return 0
 
