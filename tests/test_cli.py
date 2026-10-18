@@ -743,3 +743,46 @@ def test_find_keyword_as_text_is_missing_text():
         "[ ] 1: milk",
         "open 1, done 0",
     ]
+
+
+def test_undo_reopens_done_todo():
+    assert run(["add", "milk", "done", "1", "undo", "1", "list"]) == [
+        "added 1: milk",
+        "done 1",
+        "reopened 1",
+        "[ ] 1: milk",
+    ]
+
+
+def test_undo_open_todo_stays_open():
+    assert run(["add", "milk", "undo", "1", "list"]) == [
+        "added 1: milk",
+        "reopened 1",
+        "[ ] 1: milk",
+    ]
+
+
+def test_undo_missing_id_reports_error():
+    assert run(["undo"]) == ["error: missing id"]
+    assert run(["add", "milk", "undo", "list"]) == [
+        "added 1: milk",
+        "error: missing id",
+        "[ ] 1: milk",
+    ]
+
+
+def test_undo_invalid_id_reports_error_and_continues():
+    assert run(["undo", "x", "list"]) == ["error: invalid id 'x'"]
+
+
+def test_undo_unknown_id_reports_error():
+    assert run(["undo", "99"]) == ["error: no todo 99"]
+
+
+def test_undo_keyword_is_command():
+    assert run(["add", "milk", "done", "1", "undo", "list"]) == [
+        "added 1: milk",
+        "done 1",
+        "error: missing id",
+        "[x] 1: milk",
+    ]
