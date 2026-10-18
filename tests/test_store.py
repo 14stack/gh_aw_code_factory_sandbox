@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from todo_app import TodoNotFoundError, TodoStore
@@ -44,6 +46,27 @@ def test_completing_spawn_spawns_again():
     assert spawned.title == "water plants"
     assert spawned.recurrence == "3d"
     assert spawned.done is False
+
+
+def test_add_stores_due_date():
+    store = TodoStore()
+    assert store.add("spec", due=date(2026, 1, 31)).due == date(2026, 1, 31)
+    assert store.add("plain").due is None
+
+
+def test_list_sorts_dated_first_ascending_undated_last():
+    store = TodoStore()
+    undated = store.add("undated")
+    later = store.add("later", due=date(2026, 3, 1))
+    sooner = store.add("sooner", due=date(2026, 1, 31))
+    assert [t.id for t in store.list()] == [sooner.id, later.id, undated.id]
+
+
+def test_list_keeps_id_order_for_equal_due_dates():
+    store = TodoStore()
+    first = store.add("first", due=date(2026, 1, 31))
+    second = store.add("second", due=date(2026, 1, 31))
+    assert [t.id for t in store.list()] == [first.id, second.id]
 
 
 def test_complete_and_filter():
