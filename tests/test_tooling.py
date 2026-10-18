@@ -25,3 +25,21 @@ def test_mypy_config_present():
     assert mypy["no_implicit_optional"] is True
     assert mypy["check_untyped_defs"] is True
     assert "strict" not in mypy
+
+
+def test_makefile_defines_quality_targets():
+    makefile = Path(__file__).resolve().parents[1] / "Makefile"
+    assert makefile.is_file()
+    text = makefile.read_text(encoding="utf-8")
+
+    assert "lint-check:" in text
+    assert "test-unit:" in text
+    assert ".PHONY: lint-check test-unit" in text
+
+    lint_recipe = text.split("lint-check:", 1)[1].split("test-unit:", 1)[0]
+    assert "ruff check" in lint_recipe
+    assert "ruff format --check" in lint_recipe
+    assert "mypy" in lint_recipe
+
+    test_recipe = text.split("test-unit:", 1)[1]
+    assert "pytest" in test_recipe
