@@ -340,3 +340,63 @@ def test_list_filters_by_priority():
     assert store.list(priority="medium") == []
     with pytest.raises(ValueError):
         store.list(priority="urgent")
+
+
+def test_set_title_strips_and_returns_todo():
+    store = TodoStore()
+    todo = store.add("pay rent")
+    returned = store.set_title(todo.id, "  pay the rent ")
+    assert returned is todo
+    assert returned.title == "pay the rent"
+    assert store.get(todo.id).title == "pay the rent"
+
+
+def test_set_title_rejects_blank_title():
+    store = TodoStore()
+    todo = store.add("pay rent")
+    with pytest.raises(ValueError, match="title must not be empty"):
+        store.set_title(todo.id, "   ")
+    assert store.get(todo.id).title == "pay rent"
+
+
+def test_set_title_blank_title_on_unknown_id_raises_value_error():
+    store = TodoStore()
+    with pytest.raises(ValueError, match="title must not be empty"):
+        store.set_title(7, "  ")
+
+
+def test_set_title_missing_id_raises():
+    store = TodoStore()
+    with pytest.raises(TodoNotFoundError):
+        store.set_title(7, "pay rent")
+
+
+def test_set_title_keeps_other_fields():
+    store = TodoStore()
+    todo = store.add("water plants", recurrence="3d", due=date(2026, 1, 31), priority="high")
+    store.complete(todo.id)
+    store.set_title(todo.id, "water the plants")
+    changed = store.get(todo.id)
+    assert changed.id == todo.id
+    assert changed.done is True
+    assert changed.priority == "high"
+    assert changed.due == date(2026, 1, 31)
+    assert changed.recurrence == "3d"
+
+
+def test_store_with_path_persists_title(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("pay rent")
+    store.set_title(1, "pay the rent")
+
+    reloaded = TodoStore(path)
+    assert reloaded.get(1).title == "pay the rent"
+
+
+def test_complete_recurring_spawn_uses_new_title():
+    store = TodoStore()
+    store.add("water plants", recurrence="3d")
+    store.set_title(1, "water the plants")
+    store.complete(1)
+    assert store.get(2).title == "water the plants"
