@@ -45,6 +45,7 @@ jobs:
     needs: activation
     runs-on: ubuntu-latest
     outputs:
+      proceed: ${{ steps.start.outputs.proceed }}
       story: ${{ steps.start.outputs.story }}
       story_branch: ${{ steps.start.outputs.story_branch }}
       sub_branch: ${{ steps.start.outputs.sub_branch }}
@@ -80,9 +81,9 @@ jobs:
   # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
   # agent reported nothing. The first time, retry by re-applying the trigger label; then flag a human.
   on_failure:
-    needs: [agent, detection]
+    needs: [agent, detection, start]
     if: >-
-      always() && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
+      always() && needs.start.outputs.proceed == 'true' && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
       (needs.agent.result == 'success' && !contains(needs.agent.outputs.output_types, 'report_implementation')))
     runs-on: ubuntu-latest
     steps:
@@ -118,7 +119,17 @@ jobs:
 checkout:
   ref: ${{ needs.start.outputs.story_branch }}
 steps:
+  # A noop written before the agent starts makes gh-aw exit cleanly without starting the model. GH_AW_SAFE_OUTPUTS is
+  # not in the environment of custom steps, so the path comes from gh-aw's set-runtime-paths step.
+  - name: Skip the agent when the pre-job decided so (no AI credits; the reason is in the Automation log)
+    if: needs.start.outputs.proceed != 'true'
+    env:
+      SAFE_OUTPUTS: ${{ steps.set-runtime-paths.outputs.GH_AW_SAFE_OUTPUTS }}
+    run: |
+      mkdir -p "$(dirname "$SAFE_OUTPUTS")"
+      echo '{"type":"noop","message":"Skipped by the deterministic pre-job; see the issue Automation log"}' >> "$SAFE_OUTPUTS"
   - name: Save the sub-issue and its story for the agent
+    if: needs.start.outputs.proceed == 'true'
     env:
       GH_TOKEN: ${{ github.token }}
       ISSUE: ${{ github.event.issue.number }}
@@ -132,9 +143,11 @@ steps:
       printf 'story_branch=%s\nsub_branch=%s\n' "$STORY_BRANCH" "$SUB_BRANCH" > /tmp/gh-aw/agent/branches.txt
       cat /tmp/gh-aw/agent/branches.txt
   - uses: actions/setup-python@v5
+    if: needs.start.outputs.proceed == 'true'
     with:
       python-version: "3.12"
   - name: Install the project's dev dependencies (the agent has no package-index access)
+    if: needs.start.outputs.proceed == 'true'
     run: |
       if [ -f .github/factory/setup.sh ]; then bash .github/factory/setup.sh
       elif [ -f pyproject.toml ]; then python -m pip install --quiet -e ".[dev]"
