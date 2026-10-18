@@ -340,3 +340,35 @@ def test_list_filters_by_priority():
     assert store.list(priority="medium") == []
     with pytest.raises(ValueError):
         store.list(priority="urgent")
+
+
+def test_next_id_starts_at_one():
+    assert TodoStore().next_id == 1
+
+
+def test_next_id_increments_after_add():
+    store = TodoStore()
+    store.add("a")
+    assert store.next_id == 2
+    store.add("b")
+    assert store.next_id == 3
+
+
+def test_next_id_unchanged_by_reads():
+    store = TodoStore()
+    store.add("a")
+    store.add("b")
+    store.complete(1)
+    before = store.next_id
+
+    store.list()
+    store.counts()
+    store.get(2)
+
+    assert store.next_id == before
+
+
+def test_next_id_is_read_only():
+    store = TodoStore()
+    with pytest.raises(AttributeError):
+        store.next_id = 5

@@ -61,9 +61,9 @@ def load(path: Path) -> tuple[dict[int, Todo], int]:
     return todos, next_id
 
 
-def save(path: Path, todos: Iterable[Todo], next_id: int) -> None:
-    """Write ``todos`` and ``next_id`` to ``path`` atomically."""
-    document = {
+def document(todos: Iterable[Todo], next_id: int) -> dict[str, object]:
+    """Return the versioned document dict for ``todos`` and ``next_id``."""
+    return {
         "version": VERSION,
         "next_id": next_id,
         "todos": [
@@ -78,11 +78,16 @@ def save(path: Path, todos: Iterable[Todo], next_id: int) -> None:
             for todo in todos
         ],
     }
+
+
+def save(path: Path, todos: Iterable[Todo], next_id: int) -> None:
+    """Write ``todos`` and ``next_id`` to ``path`` atomically."""
+    document_ = document(todos, next_id)
     tmp = path.with_name(path.name + ".tmp")
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         with tmp.open("w", encoding="utf-8") as handle:
-            json.dump(document, handle, indent=2)
+            json.dump(document_, handle, indent=2)
             handle.write("\n")
         os.replace(tmp, path)
     except OSError as exc:
