@@ -7,6 +7,7 @@ from pathlib import Path
 from todo_app import storage
 
 PRIORITIES: tuple[str, ...] = ("high", "medium", "low")
+STATUSES: tuple[str, ...] = ("open", "done", "overdue")
 DEFAULT_PRIORITY: str = "medium"
 
 
@@ -121,15 +122,30 @@ class TodoStore:
         done_count = sum(1 for todo in self._todos.values() if todo.done)
         return open_count, done_count
 
-    def list(self, *, include_done: bool = True, priority: str | None = None) -> list[Todo]:
+    def list(
+        self,
+        *,
+        include_done: bool = True,
+        priority: str | None = None,
+        status: str | None = None,
+    ) -> list[Todo]:
         if priority is not None and priority not in PRIORITIES:
             raise ValueError(f"invalid priority {priority!r}")
+        if status is not None and status not in STATUSES:
+            raise ValueError(f"invalid status {status!r}")
         todos = sorted(
             self._todos.values(),
             key=lambda t: (PRIORITIES.index(t.priority), t.due is None, t.due or date.min, t.id),
         )
         if priority is not None:
             todos = [t for t in todos if t.priority == priority]
+        if status == "open":
+            todos = [t for t in todos if not t.done]
+        elif status == "done":
+            todos = [t for t in todos if t.done]
+        elif status == "overdue":
+            today = date.today()
+            todos = [t for t in todos if not t.done and t.due is not None and t.due < today]
         if include_done:
             return todos
         return [t for t in todos if not t.done]
