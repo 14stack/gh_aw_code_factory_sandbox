@@ -86,6 +86,17 @@ missing `<when>` prints `error: invalid due date <token>`; in both cases the res
 todo due 1 2026-11-01 due 1 +3d due 1 none
 ```
 
+## Reopening a todo
+
+`todo undo <id>` marks a todo as open again, for example one marked done by mistake. It prints `reopened <id>`,
+both for a done todo and for a todo that is already open. An invalid id prints `error: invalid id '<token>'` and an
+unknown id prints `error: no todo <id>`; a missing id prints `error: missing id`. In every case the rest of the
+command chain still runs.
+
+```bash
+todo done 1 undo 1
+```
+
 ```bash
 todo export csv > todos.csv
 todo export json > todos.json

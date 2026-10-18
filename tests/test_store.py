@@ -461,3 +461,36 @@ def test_list_status_combines_with_priority():
     assert [t.id for t in store.list(status="open", priority="high")] == [1]
     assert [t.id for t in store.list(status="done", priority="high")] == [2]
     assert [t.id for t in store.list(status="done", priority="low")] == []
+
+
+def test_reopen_done_todo():
+    store = TodoStore()
+    store.add("a")
+    store.complete(1)
+    reopened = store.reopen(1)
+    assert reopened.id == 1
+    assert reopened.done is False
+    assert store.get(1).done is False
+
+
+def test_reopen_open_todo_stays_open():
+    store = TodoStore()
+    store.add("a")
+    assert store.reopen(1).done is False
+    assert store.get(1).done is False
+
+
+def test_reopen_unknown_id_raises():
+    store = TodoStore()
+    with pytest.raises(TodoNotFoundError):
+        store.reopen(1)
+
+
+def test_store_with_path_persists_reopen(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("a")
+    store.complete(1)
+    store.reopen(1)
+
+    assert TodoStore(path).get(1).done is False
