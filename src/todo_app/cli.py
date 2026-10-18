@@ -34,6 +34,14 @@ def _parse_due(token: str) -> date | None:
         return None
 
 
+def _parse_id(token: str) -> int | None:
+    """Return the todo id for ``token``, or None if it is not an integer."""
+    try:
+        return int(token)
+    except ValueError:
+        return None
+
+
 def run(args: list[str], store: TodoStore | None = None) -> list[str]:
     """Execute commands from ``args`` and return the output lines."""
     store = store or TodoStore()
@@ -79,7 +87,12 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 out.append("error: missing id")
                 i += 1
                 continue
-            todo_id = int(args[i + 1])
+            token = args[i + 1]
+            todo_id = _parse_id(token)
+            if todo_id is None:
+                out.append(f"error: invalid id {token!r}")
+                i += 2
+                continue
             try:
                 if cmd == "done":
                     store.complete(todo_id)
