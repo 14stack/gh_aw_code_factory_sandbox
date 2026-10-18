@@ -53,6 +53,17 @@ redirect the output wherever you want it. The format defaults to `md`:
 
 An unknown format prints `error: invalid format '<token>'` and the rest of the command chain still runs.
 
+## Changing a due date
+
+`todo due <id> <when>` sets the due date of an existing todo. `<when>` is an ISO date (`2026-11-01`), a relative
+day count (`+3d` means three days from today) or `none` to clear it. The updated todo is printed in the same format
+as `list`, including recurrence and `OVERDUE` markers. An invalid id prints `error: no todo <id>` and an invalid or
+missing `<when>` prints `error: invalid due date <token>`; in both cases the rest of the command chain still runs.
+
+```bash
+todo due 1 2026-11-01 due 1 +3d due 1 none
+```
+
 ```bash
 todo export csv > todos.csv
 todo export json > todos.json
