@@ -114,3 +114,29 @@ def test_counts_after_complete_spawns_recurrence():
     store.add("water plants", recurrence="3d")
     store.complete(1)
     assert store.counts() == (1, 1)
+
+
+def test_add_defaults_to_medium_priority():
+    store = TodoStore()
+    assert store.add("milk").priority == "medium"
+
+
+def test_add_stores_priority():
+    store = TodoStore()
+    assert store.add("pay rent", priority="high").priority == "high"
+    assert store.add("tidy desk", priority="low").priority == "low"
+
+
+def test_add_rejects_invalid_priority():
+    store = TodoStore()
+    with pytest.raises(ValueError):
+        store.add("pay rent", priority="urgent")
+    assert store.list() == []
+    assert store.add("milk").id == 1
+
+
+def test_complete_recurring_spawn_inherits_priority():
+    store = TodoStore()
+    store.add("water plants", recurrence="3d", priority="high")
+    store.complete(1)
+    assert store.get(2).priority == "high"
