@@ -83,6 +83,12 @@ class TodoStore:
         self._save()
         return todo
 
+    def reopen(self, todo_id: int) -> Todo:
+        todo = self.get(todo_id)
+        todo.done = False
+        self._save()
+        return todo
+
     def set_priority(self, todo_id: int, priority: str) -> Todo:
         if priority not in PRIORITIES:
             raise ValueError(f"invalid priority {priority!r}")
