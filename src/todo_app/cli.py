@@ -125,7 +125,14 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 out.append("error: missing id")
                 i += 1
                 continue
-            todo_id = int(args[i + 1])
+            token = args[i + 1]
+            todo_id = _parse_id(token)
+            if todo_id is None:
+                out.append(f"error: invalid id {token!r}")
+                i += 2
+                if i < len(args) and args[i] not in _COMMANDS:
+                    i += 1
+                continue
             level = args[i + 2] if i + 2 < len(args) else ""
             i += 3
             priority = _parse_priority(level)

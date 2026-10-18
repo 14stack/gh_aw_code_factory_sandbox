@@ -322,6 +322,33 @@ def test_prio_errors():
         "error: invalid priority 'urgent'",
         "[ ] 1: x",
     ]
+    # ``list`` is consumed as the level, matching ``add x priority list``.
+    assert run(["add", "x", "prio", "1", "list"]) == [
+        "added 1: x",
+        "error: invalid priority 'list'",
+    ]
+    assert run(["add", "x", "prio", "1"]) == [
+        "added 1: x",
+        "error: invalid priority ''",
+    ]
+
+
+def test_prio_invalid_id_reports_error_and_continues():
+    assert run(["prio", "abc", "high"]) == ["error: invalid id 'abc'"]
+    assert run(["add", "milk", "prio", "abc", "high", "list"]) == [
+        "added 1: milk",
+        "error: invalid id 'abc'",
+        "[ ] 1: milk",
+    ]
+    assert run(["prio", "1.5", "high"]) == ["error: invalid id '1.5'"]
+
+
+def test_prio_invalid_id_leaves_following_command():
+    assert run(["add", "milk", "prio", "abc", "list"]) == [
+        "added 1: milk",
+        "error: invalid id 'abc'",
+        "[ ] 1: milk",
+    ]
 
 
 def test_prio_missing_id_reports_error():
