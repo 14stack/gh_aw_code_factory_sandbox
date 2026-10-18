@@ -2,10 +2,18 @@
 # the story branch, marks the story PR ready, and finishes the story after the human merge.
 # Circuit breaker: Actions variables ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT / ORCHESTRATOR_ENABLE_AUTO_MERGE (unset = off).
 name: "Factory: orchestrator"
+run-name: >-
+  ${{ github.event_name == 'workflow_run' && format('Orchestrator: after {0}', github.event.workflow_run.display_title)
+  || github.event_name == 'pull_request' && format('Orchestrator: PR #{0} closed', github.event.pull_request.number)
+  || github.event_name == 'schedule' && 'Orchestrator: scheduled sweep'
+  || 'Orchestrator: manual run' }}
 
+# No issue-event triggers (SPEC D28): every label change would start a run. The orchestrator acts when the splitter
+# (story ready to start) or the reviewer (PR approved) finishes, when a factory PR closes (merge), and on the sweep.
 on:
-  issues:
-    types: [labeled, closed]
+  workflow_run:
+    workflows: ["Factory: splitter", "Factory: reviewer"]
+    types: [completed]
   pull_request:
     types: [closed]
   schedule:
@@ -26,9 +34,8 @@ concurrency:
 jobs:
   orchestrate:
     if: >-
-      github.event_name != 'issues' || github.event.action == 'closed' ||
-      contains(fromJSON('["factory:sub_issue_pr_approved","factory:sub_issue_done","factory:story_in_progress"]'),
-      github.event.label.name)
+      github.event_name != 'pull_request' ||
+      startsWith(github.head_ref, 'sub/') || startsWith(github.head_ref, 'story/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -60,13 +67,11 @@ jobs:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT: ${{ vars.ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT }}
           ORCHESTRATOR_ENABLE_AUTO_MERGE: ${{ vars.ORCHESTRATOR_ENABLE_AUTO_MERGE }}
-          ISSUE: ${{ github.event.issue.number }}
           PR: ${{ github.event.pull_request.number }}
           STORY: ${{ inputs.story }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           args=(--repo "$GITHUB_REPOSITORY" --sweep --run-url "$RUN_URL")
-          [ -n "$ISSUE" ] && args+=(--issue "$ISSUE")
           [ -n "$PR" ] && args+=(--pr "$PR")
           [ -n "$STORY" ] && args+=(--story "$STORY")
           python3 -m agents.ai_orchestrator.orchestrate "${args[@]}"

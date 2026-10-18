@@ -1,13 +1,23 @@
 ---
 description: "Factory refiner (SPEC §9.1): turns a story issue into a refined story or asks the human what blocks it"
+name: "Factory: refiner"
+run-name: "Refiner: story #${{ fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
 on:
-  issues:
-    types: [labeled]
-    names: ["factory:refinement_requires_ai_review"]
-  # Humans set this label (story form, answers); the factory App only re-applies it to retry a failed run.
-  bots: ["gh-aw-code-factory"]
-  reaction: eyes
+  # Routed (SPEC D28): gh-aw's generated router (agentic_commands.yml) is the only workflow listening to label events.
+  # It dispatches this workflow only when this label is added, so other label changes don't start a run here.
+  label_command:
+    name: "factory:refinement_requires_ai_review"
+    events: [issues]
+    remove_label: false  # factory labels are state, not one-shot commands
+    strategy: decentralized
+  bots: ["gh-aw-code-factory"]  # the factory App sets the label (humans for the refiner)
+  reaction: none
   status-comment: false
+concurrency:
+  group: "factory-refiner-${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
+  job-discriminator: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
+# The ai_needs_human guard lives in the deterministic code: under workflow_dispatch the issue's labels aren't in the
+# event payload.
 if: vars.FACTORY_ENABLED == 'true'
 permissions:
   contents: read
@@ -42,7 +52,7 @@ steps:
   - name: Save the story for the agent
     env:
       GH_TOKEN: ${{ github.token }}
-      ISSUE: ${{ github.event.issue.number }}
+      ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
     run: |
       mkdir -p /tmp/gh-aw/agent
       gh issue view "$ISSUE" --repo "$GITHUB_REPOSITORY" --json title --jq .title > /tmp/gh-aw/agent/story-title.txt
@@ -82,7 +92,7 @@ jobs:
         working-directory: .factory
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
-          ISSUE: ${{ github.event.issue.number }}
+          ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           python3 -m agents.common.failure --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --agent ai_refiner_agent \
@@ -137,7 +147,7 @@ safe-outputs:
           working-directory: .factory
           env:
             GH_TOKEN: ${{ steps.app.outputs.token }}
-            ISSUE: ${{ github.event.issue.number }}
+            ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
             RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           run: |
             python3 -m agents.ai_refiner_agent.apply --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" \
