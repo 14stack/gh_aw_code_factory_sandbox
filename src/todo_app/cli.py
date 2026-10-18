@@ -32,7 +32,6 @@ _COMMANDS = frozenset(
         "prio",
         "due",
         "export",
-        "tag",
     }
 )
 
@@ -272,7 +271,7 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             tags: list[str] = []
             errors: list[str] = []
             i += 1
-            while i < len(args) and (args[i] not in _COMMANDS or args[i] in ("done", "tag")):
+            while i < len(args) and (args[i] not in _COMMANDS or args[i] == "done"):
                 token = args[i]
                 i += 1
                 if token == "tag":

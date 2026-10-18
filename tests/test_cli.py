@@ -1020,6 +1020,68 @@ def test_list_tag_consumes_status_word_as_tag():
     assert run(["list", "tag", "done"], store) == ["[ ] 1: milk #done"]
 
 
+def test_list_tag_combines_with_priority_in_either_order():
+    setup = [
+        "add",
+        "high work",
+        "tag",
+        "work",
+        "priority",
+        "high",
+        "add",
+        "low work",
+        "tag",
+        "work",
+        "priority",
+        "low",
+        "add",
+        "high home",
+        "tag",
+        "home",
+        "priority",
+        "high",
+    ]
+    expected = [
+        "added 1: high work",
+        "added 2: low work",
+        "added 3: high home",
+        "! [ ] 1: high work #work",
+    ]
+    assert run([*setup, "list", "tag", "work", "high"]) == expected
+    assert run([*setup, "list", "high", "tag", "work"]) == expected
+
+
+def test_list_tag_combines_with_status_in_either_order():
+    setup = [
+        "add",
+        "work open",
+        "tag",
+        "work",
+        "add",
+        "work done",
+        "tag",
+        "work",
+        "done",
+        "2",
+    ]
+    expected = [
+        "added 1: work open",
+        "added 2: work done",
+        "done 2",
+        "[ ] 1: work open #work",
+    ]
+    assert run([*setup, "list", "tag", "work", "open"]) == expected
+    assert run([*setup, "list", "open", "tag", "work"]) == expected
+
+
+def test_list_tag_does_not_swallow_following_command():
+    assert run(["add", "milk", "tag", "home", "list", "tag", "home", "count"]) == [
+        "added 1: milk",
+        "[ ] 1: milk #home",
+        "open 1, done 0",
+    ]
+
+
 def test_tag_suffixes_are_alphabetical_and_absent_when_untagged():
     assert run(["add", "milk", "tag", "work", "tag", "home", "add", "plain", "list"]) == [
         "added 1: milk",
