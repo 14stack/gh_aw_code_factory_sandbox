@@ -72,7 +72,13 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 continue
             todo = store.add(title, recurrence=recurrence, due=due)
             out.append(f"added {todo.id}: {todo.title}")
-        elif cmd in ("done", "rm") and i + 1 < len(args):
+        elif cmd in ("done", "rm"):
+            # A following command keyword is not an id, so it stays a command.
+            has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+            if not has_token:
+                out.append("error: missing id")
+                i += 1
+                continue
             todo_id = int(args[i + 1])
             try:
                 if cmd == "done":
