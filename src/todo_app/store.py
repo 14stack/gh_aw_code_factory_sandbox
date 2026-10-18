@@ -41,7 +41,7 @@ class TodoStore:
         todo = self.get(todo_id)
         todo.done = True
         if todo.recurrence is not None:
-            self.add(todo.title, recurrence=todo.recurrence)
+            self.add(todo.title)
         return todo
 
     def remove(self, todo_id: int) -> None:
