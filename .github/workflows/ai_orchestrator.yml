@@ -38,10 +38,12 @@ on:
 
 permissions: {}
 
-# One run at a time, repo-wide. GitHub keeps only the newest pending run, so every run also sweeps all stories.
+# One run at a time, repo-wide. `queue: max` keeps every waiting run (by default GitHub keeps only the newest and
+# cancels the rest, which would also drop the `finished_run` an agent handed over). Every run still sweeps all stories.
 concurrency:
   group: factory-orchestrator
   cancel-in-progress: false
+  queue: max
 
 jobs:
   orchestrate:
