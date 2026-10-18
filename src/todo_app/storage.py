@@ -118,6 +118,7 @@ def _parse_todo(raw: object) -> Todo:
         raise StorageError(f"todo {todo_id}: recurrence must be a string or null")
 
     raw_due = raw.get("due")
+    due: date | None = None
     if raw_due is None:
         due = None
     elif isinstance(raw_due, str):
