@@ -11,7 +11,9 @@ from todo_app import export
 from todo_app.storage import StorageError, default_path
 from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, Todo, TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio", "due", "export"})
+_COMMANDS = frozenset(
+    {"add", "done", "rm", "list", "find", "clear", "count", "prio", "due", "export"}
+)
 
 
 def _parse_interval(token: str) -> str | None:
@@ -215,6 +217,18 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     continue
             for todo in store.list(priority=priority):
                 out.append(_format_todo(todo))
+        elif cmd == "find":
+            # A following command keyword is not the search text, so it stays a command.
+            has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+            if not has_token:
+                out.append("error: missing text")
+                i += 1
+                continue
+            text = args[i + 1].lower()
+            i += 2
+            for todo in store.list():
+                if text in todo.title.lower():
+                    out.append(_format_todo(todo))
         elif cmd == "export":
             fmt = export.DEFAULT_FORMAT
             i += 1

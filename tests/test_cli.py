@@ -636,6 +636,37 @@ def test_due_invalid_id_reports_error_and_continues():
     ]
 
 
+def test_find_matches_case_insensitively():
+    assert run(["add", "buy MILK", "add", "write spec", "find", "milk"]) == [
+        "added 1: buy MILK",
+        "added 2: write spec",
+        "[ ] 1: buy MILK",
+    ]
+
+
+def test_find_includes_done_todos():
+    assert run(["add", "buy milk", "add", "write spec", "done", "1", "find", "milk"]) == [
+        "added 1: buy milk",
+        "added 2: write spec",
+        "done 1",
+        "[x] 1: buy milk",
+    ]
+
+
+def test_find_no_match_prints_nothing():
+    assert run(["add", "buy milk", "find", "spec"]) == ["added 1: buy milk"]
+    assert run(["find", "anything"]) == []
+
+
+def test_find_without_text_reports_error():
+    assert run(["find"]) == ["error: missing text"]
+    assert run(["add", "milk", "find", "list"]) == [
+        "added 1: milk",
+        "error: missing text",
+        "[ ] 1: milk",
+    ]
+
+
 def test_due_missing_id_reports_error():
     assert run(["due"]) == ["error: missing id"]
     store = TodoStore()
@@ -671,3 +702,44 @@ def test_cli_persists_due_change_between_runs(tmp_path):
     assert reloaded.get(1).due == date(2026, 11, 1)
     run(["due", "1", "none"], reloaded)
     assert TodoStore(path).get(1).due is None
+
+
+def test_find_output_matches_list_lines():
+    future = date.today() + timedelta(days=7)
+    out = run(
+        [
+            "add",
+            "water plants",
+            "priority",
+            "high",
+            "due",
+            str(future),
+            "add",
+            "write spec",
+            "done",
+            "1",
+            "list",
+            "find",
+            "water",
+        ]
+    )
+    assert out[-1] == f"! [x] 1: water plants (due {future.isoformat()})"
+    assert out[-1] == out[3]
+
+
+def test_find_chains_with_following_command():
+    assert run(["add", "buy milk", "add", "write spec", "find", "milk", "count"]) == [
+        "added 1: buy milk",
+        "added 2: write spec",
+        "[ ] 1: buy milk",
+        "open 2, done 0",
+    ]
+
+
+def test_find_keyword_as_text_is_missing_text():
+    assert run(["add", "milk", "find", "list", "count"]) == [
+        "added 1: milk",
+        "error: missing text",
+        "[ ] 1: milk",
+        "open 1, done 0",
+    ]

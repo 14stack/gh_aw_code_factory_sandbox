@@ -29,6 +29,16 @@ or corrupt file prints `error: cannot read <path>: <reason>` and exits non-zero 
 
 See [AGENTS.md](AGENTS.md) for the commands and conventions the agents follow.
 
+## Finding todos
+
+`todo find <text>` prints every todo, open and done, whose title contains `<text>` case-insensitively, in the same
+format and order as `list`. No match prints nothing. The search is a plain substring match: no regex, no fuzzy
+matching.
+
+```bash
+todo find milk
+```
+
 ## Exporting todos
 
 `todo export [md|csv|json]` prints every todo, open and done, in `list` order. Nothing is written to disk, so
