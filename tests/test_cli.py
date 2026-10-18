@@ -129,6 +129,23 @@ def test_valid_and_unknown_ids_unchanged():
     ]
 
 
+def test_invalid_id_reports_error_and_continues():
+    assert run(["done", "abc", "list"]) == ["error: invalid id 'abc'"]
+    assert run(["add", "milk", "done", "abc", "list"]) == [
+        "added 1: milk",
+        "error: invalid id 'abc'",
+        "[ ] 1: milk",
+    ]
+
+
+def test_invalid_rm_id_reports_error():
+    assert run(["add", "milk", "rm", "x", "list"]) == [
+        "added 1: milk",
+        "error: invalid id 'x'",
+        "[ ] 1: milk",
+    ]
+
+
 def test_count_command():
     assert run(["add", "a", "add", "b", "done", "1", "count"]) == [
         "added 1: a",
