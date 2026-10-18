@@ -55,10 +55,50 @@ def test_save_writes_versioned_document(tmp_path):
                 "done": False,
                 "recurrence": None,
                 "due": "2026-01-31",
+                "priority": "medium",
             }
         ],
     }
     assert path.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_save_writes_priority(tmp_path):
+    path = tmp_path / "todos.json"
+    save(
+        path,
+        [
+            Todo(id=1, title="pay rent", priority="high"),
+            Todo(id=2, title="tidy desk", priority="low"),
+        ],
+        next_id=3,
+    )
+
+    document = json.loads(path.read_text(encoding="utf-8"))
+    assert [todo["priority"] for todo in document["todos"]] == ["high", "low"]
+
+
+def test_load_defaults_missing_priority_to_medium(tmp_path):
+    path = tmp_path / "todos.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "next_id": 3,
+                "todos": [
+                    {"id": 1, "title": "a", "done": False, "recurrence": None, "due": None},
+                    {"id": 2, "title": "b", "done": True, "recurrence": "3d", "due": None},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    loaded, _ = load(path)
+    assert [todo.priority for todo in loaded.values()] == ["medium", "medium"]
+
+    save(path, loaded.values(), next_id=3)
+    document = json.loads(path.read_text(encoding="utf-8"))
+    assert [todo["priority"] for todo in document["todos"]] == ["medium", "medium"]
 
 
 def test_save_is_atomic_and_leaves_no_temp_file(tmp_path):
@@ -124,12 +164,80 @@ def test_save_wraps_parent_directory_errors(tmp_path):
             "next_id": 1,
             "todos": [{"id": 1, "title": "a", "done": False, "due": 20260131}],
         },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "a",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": "urgent",
+                }
+            ],
+        },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "a",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": None,
+                }
+            ],
+        },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "a",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": 1,
+                }
+            ],
+        },
     ],
 )
 def test_load_rejects_invalid_documents(tmp_path, document):
     path = tmp_path / "todos.json"
     path.write_text(json.dumps(document), encoding="utf-8")
     with pytest.raises(StorageError):
+        load(path)
+
+
+@pytest.mark.parametrize("priority", ["urgent", None, 1])
+def test_load_rejects_invalid_priority(tmp_path, priority):
+    path = tmp_path / "todos.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "next_id": 2,
+                "todos": [
+                    {
+                        "id": 1,
+                        "title": "a",
+                        "done": False,
+                        "recurrence": None,
+                        "due": None,
+                        "priority": priority,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(StorageError, match=r"todo 1: invalid priority"):
         load(path)
 
 

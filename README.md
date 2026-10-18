@@ -21,8 +21,10 @@ Set `TODO_FILE` to use another file. A relative value resolves against the curre
 TODO_FILE=/path/to/todos.json todo list
 ```
 
-The file is versioned JSON (`{"version": 1, "next_id": ..., "todos": [...]}`), where `due` is an ISO date or `null`
-and `recurrence` is a string or `null`. A missing file is not an error: the first run starts with an empty list. An
-unreadable or corrupt file prints `error: cannot read <path>: <reason>` and exits non-zero without overwriting it.
+The file is versioned JSON (`{"version": 1, "next_id": ..., "todos": [...]}`), where `due` is an ISO date or `null`,
+`recurrence` is a string or `null` and `priority` is one of `high`, `medium` or `low`. A file written before the
+`priority` field existed still loads, with every todo at `medium` priority, and is rewritten with an explicit
+`priority` on the next save. A missing file is not an error: the first run starts with an empty list. An unreadable
+or corrupt file prints `error: cannot read <path>: <reason>` and exits non-zero without overwriting it.
 
 See [AGENTS.md](AGENTS.md) for the commands and conventions the agents follow.

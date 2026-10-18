@@ -1,3 +1,4 @@
+import json
 import sys
 from datetime import date, timedelta
 
@@ -208,6 +209,35 @@ def test_cli_persists_between_runs(tmp_path):
     assert run(["count"], TodoStore(path=path)) == ["open 1, done 0"]
 
 
+def test_cli_persists_priority_between_runs(tmp_path):
+    path = tmp_path / "todos.json"
+    assert run(["add", "pay rent", "priority", "high"], TodoStore(path=path)) == [
+        "added 1: pay rent"
+    ]
+    assert run(["list"], TodoStore(path=path)) == ["! [ ] 1: pay rent"]
+
+    assert run(["add", "tidy desk", "priority", "low"], TodoStore(path=path)) == [
+        "added 2: tidy desk"
+    ]
+    assert run(["list"], TodoStore(path=path)) == ["! [ ] 1: pay rent", "↓ [ ] 2: tidy desk"]
+
+
+def test_cli_persists_prio_change_between_runs(tmp_path):
+    path = tmp_path / "todos.json"
+    assert run(["add", "pay rent", "prio", "1", "high"], TodoStore(path=path)) == [
+        "added 1: pay rent",
+        "prio 1: high",
+    ]
+    assert run(["list"], TodoStore(path=path)) == ["! [ ] 1: pay rent"]
+
+    assert run(["add", "tidy desk", "done", "2", "prio", "2", "high"], TodoStore(path=path)) == [
+        "added 2: tidy desk",
+        "done 2",
+        "prio 2: high",
+    ]
+    assert run(["list"], TodoStore(path=path)) == ["! [ ] 1: pay rent", "! [x] 2: tidy desk"]
+
+
 def test_cli_reports_unreadable_file(tmp_path, monkeypatch, capsys):
     path = tmp_path / "todos.json"
     corrupt = "{not json"
@@ -221,6 +251,37 @@ def test_cli_reports_unreadable_file(tmp_path, monkeypatch, capsys):
     assert captured.out == ""
     assert f"error: cannot read {path}:" in captured.err
     assert path.read_text(encoding="utf-8") == corrupt
+
+
+def test_cli_reports_invalid_priority_in_file(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "todos.json"
+    document = json.dumps(
+        {
+            "version": 1,
+            "next_id": 2,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "pay rent",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": "urgent",
+                }
+            ],
+        }
+    )
+    path.write_text(document, encoding="utf-8")
+    monkeypatch.setenv("TODO_FILE", str(path))
+    monkeypatch.setattr(sys, "argv", ["todo", "list"])
+
+    assert main() == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert f"error: cannot read {path}:" in captured.err
+    assert "todo 1: invalid priority 'urgent'" in captured.err
+    assert path.read_text(encoding="utf-8") == document
 
 
 def test_add_with_priority_and_list_marks_high_and_low():

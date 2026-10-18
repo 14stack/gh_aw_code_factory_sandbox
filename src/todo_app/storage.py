@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from datetime import date
 from pathlib import Path
 
-from todo_app.store import Todo
+from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, Todo
 
 VERSION = 1
 _TODO_FIELDS = ("id", "title", "done", "recurrence", "due")
@@ -73,6 +73,7 @@ def save(path: Path, todos: Iterable[Todo], next_id: int) -> None:
                 "done": todo.done,
                 "recurrence": todo.recurrence,
                 "due": todo.due.isoformat() if todo.due is not None else None,
+                "priority": todo.priority,
             }
             for todo in todos
         ],
@@ -127,4 +128,15 @@ def _parse_todo(raw: object) -> Todo:
     else:
         raise StorageError(f"todo {todo_id}: due must be an ISO date string or null")
 
-    return Todo(id=todo_id, title=title, done=done, recurrence=recurrence, due=due)
+    priority = raw.get("priority", DEFAULT_PRIORITY)
+    if priority not in PRIORITIES:
+        raise StorageError(f"todo {todo_id}: invalid priority {priority!r}")
+
+    return Todo(
+        id=todo_id,
+        title=title,
+        done=done,
+        recurrence=recurrence,
+        due=due,
+        priority=priority,
+    )
