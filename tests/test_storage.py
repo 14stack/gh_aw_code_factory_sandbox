@@ -55,10 +55,50 @@ def test_save_writes_versioned_document(tmp_path):
                 "done": False,
                 "recurrence": None,
                 "due": "2026-01-31",
+                "priority": "medium",
             }
         ],
     }
     assert path.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_save_writes_priority(tmp_path):
+    path = tmp_path / "todos.json"
+    save(
+        path,
+        [
+            Todo(id=1, title="pay rent", priority="high"),
+            Todo(id=2, title="tidy desk", priority="low"),
+        ],
+        next_id=3,
+    )
+
+    document = json.loads(path.read_text(encoding="utf-8"))
+    assert [todo["priority"] for todo in document["todos"]] == ["high", "low"]
+
+
+def test_load_defaults_missing_priority_to_medium(tmp_path):
+    path = tmp_path / "todos.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "next_id": 3,
+                "todos": [
+                    {"id": 1, "title": "a", "done": False, "recurrence": None, "due": None},
+                    {"id": 2, "title": "b", "done": True, "recurrence": "3d", "due": None},
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    loaded, _ = load(path)
+    assert [todo.priority for todo in loaded.values()] == ["medium", "medium"]
+
+    save(path, loaded.values(), next_id=3)
+    document = json.loads(path.read_text(encoding="utf-8"))
+    assert [todo["priority"] for todo in document["todos"]] == ["medium", "medium"]
 
 
 def test_save_is_atomic_and_leaves_no_temp_file(tmp_path):
