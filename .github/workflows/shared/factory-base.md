@@ -40,3 +40,5 @@ safe-outputs:
   `safeoutputs` shell command, and pass only the parameters the tool schema lists.
 - If a shell command is denied, **don't retry it**: it will be denied again and burns your turn budget. Use a
   command you are allowed to run, or continue without it.
+- Never run the same command again without changing something first. If a result surprises you, read the code
+  that produced it, edit it, then re-run. Your turn budget is limited; a run that loops on checks fails.

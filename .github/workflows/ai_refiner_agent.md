@@ -4,7 +4,8 @@ on:
   issues:
     types: [labeled]
     names: ["factory:refinement_requires_ai_review"]
-  # Human-triggered only: no `bots:` entry, the factory App never sets this label.
+  # Humans set this label (story form, answers); the factory App only re-applies it to retry a failed run.
+  bots: ["gh-aw-code-factory"]
   reaction: eyes
   status-comment: false
 if: vars.FACTORY_ENABLED == 'true'
@@ -47,6 +48,45 @@ steps:
       gh issue view "$ISSUE" --repo "$GITHUB_REPOSITORY" --json title --jq .title > /tmp/gh-aw/agent/story-title.txt
       gh issue view "$ISSUE" --repo "$GITHUB_REPOSITORY" --json body --jq .body > /tmp/gh-aw/agent/story.md
       cat /tmp/gh-aw/agent/story-title.txt
+jobs:
+  # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
+  # agent reported nothing. The first time, retry by re-applying the trigger label; then flag a human.
+  on_failure:
+    needs: [agent, detection]
+    if: >-
+      always() && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
+      (needs.agent.result == 'success' && !contains(needs.agent.outputs.output_types, 'apply_refinement')))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint factory App token
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |-
+            ${{ github.event.repository.name }}
+            gh_aw_code_factory
+          permission-contents: read
+          permission-issues: write
+      - name: Check out factory helpers
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ github.repository_owner }}/gh_aw_code_factory
+          ref: ${{ vars.FACTORY_REF || 'claude/charming-knuth-6m2xdz' }}
+          token: ${{ steps.app.outputs.token }}
+          path: .factory
+          persist-credentials: false
+      - name: Retry once, then flag a human
+        working-directory: .factory
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 -m agents.common.failure --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --agent ai_refiner_agent \
+            --trigger factory:refinement_requires_ai_review --kind story --run-url "$RUN_URL"
 safe-outputs:
   jobs:
     # Deterministic half of the refiner (agents/ai_refiner_agent/apply.py): validates the proposed body, keeps the
