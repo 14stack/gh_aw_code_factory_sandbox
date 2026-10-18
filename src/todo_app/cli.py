@@ -5,13 +5,13 @@ Example:
 """
 
 import sys
-from datetime import date
+from datetime import date, timedelta
 
 from todo_app import export
 from todo_app.storage import StorageError, default_path
-from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, TodoNotFoundError, TodoStore
+from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, Todo, TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio", "export"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio", "due", "export"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -47,6 +47,37 @@ def _parse_id(token: str) -> int | None:
         return int(token)
     except ValueError:
         return None
+
+
+def _parse_when(token: str) -> date | None:
+    """Return the due date for ``token``, or None if it is not a valid due date."""
+    if token == "none":
+        return None
+    if token.startswith("+") and token.endswith("d"):
+        try:
+            days = int(token[1:-1])
+        except ValueError:
+            return None
+        if days >= 1:
+            return date.today() + timedelta(days=days)
+        return None
+    return _parse_due(token)
+
+
+def _format_todo(todo: Todo) -> str:
+    """Render ``todo`` in the same format as a ``list`` line."""
+    mark = "x" if todo.done else " "
+    marker = "! " if todo.priority == "high" else "↓ " if todo.priority == "low" else ""
+    line = f"{marker}[{mark}] {todo.id}: {todo.title}"
+    if todo.recurrence is not None:
+        if todo.recurrence == "weekly":
+            line += " (weekly)"
+        else:
+            line += f" (every {todo.recurrence})"
+    if todo.due is not None:
+        overdue = ", OVERDUE" if todo.due < date.today() else ""
+        line += f" (due {todo.due.isoformat()}{overdue})"
+    return line
 
 
 def run(args: list[str], store: TodoStore | None = None) -> list[str]:
@@ -146,6 +177,32 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 out.append(f"prio {todo_id}: {priority}")
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
+        elif cmd == "due":
+            # A following command keyword is not an id, so it stays a command.
+            has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+            if not has_token:
+                out.append("error: missing id")
+                i += 1
+                continue
+            token = args[i + 1]
+            todo_id = _parse_id(token)
+            if todo_id is None:
+                out.append(f"error: invalid id {token!r}")
+                i += 2
+                if i < len(args) and args[i] not in _COMMANDS:
+                    i += 1
+                continue
+            when = args[i + 2] if i + 2 < len(args) else ""
+            i += 3
+            due = _parse_when(when)
+            if when != "none" and due is None:
+                out.append(f"error: invalid due date {when!r}")
+                continue
+            try:
+                todo = store.set_due(todo_id, due)
+                out.append(_format_todo(todo))
+            except TodoNotFoundError:
+                out.append(f"error: no todo {todo_id}")
         elif cmd == "list":
             priority: str | None = None
             i += 1
@@ -157,18 +214,7 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     out.append(f"error: invalid priority {token!r}")
                     continue
             for todo in store.list(priority=priority):
-                mark = "x" if todo.done else " "
-                marker = "! " if todo.priority == "high" else "↓ " if todo.priority == "low" else ""
-                line = f"{marker}[{mark}] {todo.id}: {todo.title}"
-                if todo.recurrence is not None:
-                    if todo.recurrence == "weekly":
-                        line += " (weekly)"
-                    else:
-                        line += f" (every {todo.recurrence})"
-                if todo.due is not None:
-                    overdue = ", OVERDUE" if todo.due < date.today() else ""
-                    line += f" (due {todo.due.isoformat()}{overdue})"
-                out.append(line)
+                out.append(_format_todo(todo))
         elif cmd == "export":
             fmt = export.DEFAULT_FORMAT
             i += 1
