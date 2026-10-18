@@ -1,13 +1,24 @@
 ---
 description: "Factory fixer (SPEC §9.6): addresses review comments and CI failures on the sub-issue's PR"
+name: "Factory: fixer"
+run-name: "Fixer: sub-issue #${{ fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
 on:
-  issues:
-    types: [labeled]
-    names: ["factory:sub_issue_pr_requires_fix"]
-  bots: ["gh-aw-code-factory"]  # set by the reviewer's jobs and the orchestrator with the App token
-  reaction: eyes
+  # Routed (SPEC D28): gh-aw's generated router (agentic_commands.yml) is the only workflow listening to label events.
+  # It dispatches this workflow only when this label is added, so other label changes don't start a run here.
+  label_command:
+    name: "factory:sub_issue_pr_requires_fix"
+    events: [issues]
+    remove_label: false  # factory labels are state, not one-shot commands
+    strategy: decentralized
+  bots: ["gh-aw-code-factory"]  # the factory App sets the label (humans for the refiner)
+  reaction: none
   status-comment: false
-if: vars.FACTORY_ENABLED == 'true' && !contains(github.event.issue.labels.*.name, 'factory:ai_needs_human')
+concurrency:
+  group: "factory-fixer-${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
+  job-discriminator: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
+# The ai_needs_human guard lives in the deterministic code: under workflow_dispatch the issue's labels aren't in the
+# event payload.
+if: vars.FACTORY_ENABLED == 'true'
 permissions:
   actions: read
   checks: read
@@ -78,7 +89,7 @@ jobs:
         working-directory: .factory
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
-          ISSUE: ${{ github.event.issue.number }}
+          ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 -m agents.ai_pr_fixer.lifecycle prepare --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --run-url "$RUN_URL"
   # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
@@ -114,7 +125,7 @@ jobs:
         working-directory: .factory
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
-          ISSUE: ${{ github.event.issue.number }}
+          ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           python3 -m agents.common.failure --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --agent ai_pr_fixer \
@@ -137,7 +148,7 @@ steps:
     if: needs.prepare.outputs.proceed == 'true'
     env:
       GH_TOKEN: ${{ github.token }}
-      ISSUE: ${{ github.event.issue.number }}
+      ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
       PR: ${{ needs.prepare.outputs.pr_number }}
     run: |
       mkdir -p /tmp/gh-aw/agent
@@ -234,7 +245,7 @@ safe-outputs:
           working-directory: .factory
           env:
             GH_TOKEN: ${{ steps.app.outputs.token }}
-            ISSUE: ${{ github.event.issue.number }}
+            ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
             RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           run: |
             python3 -m agents.ai_pr_fixer.lifecycle finish --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" \
