@@ -183,6 +183,20 @@ def test_store_with_path_persists_complete_and_spawn(tmp_path):
     assert reloaded.get(2).recurrence == "3d"
 
 
+def test_store_with_path_persists_priority(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("pay rent", priority="high")
+    store.add("water plants", recurrence="3d", priority="low")
+
+    reloaded = TodoStore(path)
+    assert reloaded.get(1).priority == "high"
+    assert reloaded.get(2).priority == "low"
+
+    reloaded.complete(2)
+    assert TodoStore(path).get(3).priority == "low"
+
+
 def test_store_with_path_persists_remove_and_next_id(tmp_path):
     path = tmp_path / "todos.json"
     store = TodoStore(path)
