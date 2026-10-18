@@ -406,3 +406,58 @@ def test_store_with_path_persists_set_due(tmp_path):
 
     reloaded.set_due(1, None)
     assert TodoStore(path).get(1).due is None
+
+
+def test_list_status_open_returns_only_open_in_sort_order():
+    store = TodoStore()
+    store.add("a")
+    store.add("b", due=date(2026, 1, 31))
+    store.add("c")
+    store.complete(2)
+    assert [t.id for t in store.list(status="open")] == [1, 3]
+
+
+def test_list_status_done_returns_only_done():
+    store = TodoStore()
+    store.add("a")
+    store.add("b")
+    store.add("c")
+    store.complete(3)
+    store.complete(1)
+    assert [t.id for t in store.list(status="done")] == [1, 3]
+
+
+def test_list_status_overdue_returns_open_past_due_only():
+    today = date.today()
+    store = TodoStore()
+    store.add("past", due=date(2000, 1, 1))
+    store.add("future", due=date(2999, 1, 1))
+    store.add("undated")
+    store.add("today", due=today)
+    assert [t.id for t in store.list(status="overdue")] == [1]
+
+
+def test_list_status_overdue_excludes_done_todo_with_past_due():
+    store = TodoStore()
+    store.add("past", due=date(2000, 1, 1))
+    store.add("also past", due=date(2000, 1, 2))
+    store.complete(1)
+    assert [t.id for t in store.list(status="overdue")] == [2]
+
+
+def test_list_invalid_status_raises_value_error():
+    store = TodoStore()
+    store.add("a")
+    with pytest.raises(ValueError):
+        store.list(status="bogus")
+
+
+def test_list_status_combines_with_priority():
+    store = TodoStore()
+    store.add("high open", priority="high")
+    store.add("high done", priority="high")
+    store.add("low open", priority="low")
+    store.complete(2)
+    assert [t.id for t in store.list(status="open", priority="high")] == [1]
+    assert [t.id for t in store.list(status="done", priority="high")] == [2]
+    assert [t.id for t in store.list(status="done", priority="low")] == []
