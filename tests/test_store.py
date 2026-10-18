@@ -153,3 +153,78 @@ def test_counts_after_complete_spawns_recurrence():
     store.add("water plants", recurrence="3d")
     store.complete(1)
     assert store.counts() == (1, 1)
+
+
+def test_add_defaults_to_medium_priority():
+    store = TodoStore()
+    assert store.add("milk").priority == "medium"
+
+
+def test_add_stores_priority():
+    store = TodoStore()
+    assert store.add("pay rent", priority="high").priority == "high"
+    assert store.add("tidy desk", priority="low").priority == "low"
+
+
+def test_add_rejects_invalid_priority():
+    store = TodoStore()
+    with pytest.raises(ValueError):
+        store.add("pay rent", priority="urgent")
+    assert store.list() == []
+    assert store.add("milk").id == 1
+
+
+def test_complete_recurring_spawn_inherits_priority():
+    store = TodoStore()
+    store.add("water plants", recurrence="3d", priority="high")
+    store.complete(1)
+    assert store.get(2).priority == "high"
+
+
+def test_set_priority_changes_and_returns_todo():
+    store = TodoStore()
+    todo = store.add("pay rent")
+    returned = store.set_priority(todo.id, "high")
+    assert returned is todo
+    assert returned.priority == "high"
+    assert store.get(todo.id).priority == "high"
+
+
+def test_set_priority_rejects_invalid_level():
+    store = TodoStore()
+    todo = store.add("pay rent", priority="low")
+    with pytest.raises(ValueError):
+        store.set_priority(todo.id, "urgent")
+    assert store.get(todo.id).priority == "low"
+
+
+def test_set_priority_missing_id_raises():
+    store = TodoStore()
+    with pytest.raises(TodoNotFoundError):
+        store.set_priority(7, "high")
+
+
+def test_list_orders_by_priority_then_due_then_id():
+    store = TodoStore()
+    low = store.add("low", priority="low")
+    medium = store.add("medium", due=date(2026, 1, 31))
+    high_undated = store.add("high undated", priority="high")
+    high_dated = store.add("high dated", due=date(2026, 2, 1), priority="high")
+    assert [t.id for t in store.list()] == [
+        high_dated.id,
+        high_undated.id,
+        medium.id,
+        low.id,
+    ]
+
+
+def test_list_filters_by_priority():
+    store = TodoStore()
+    low = store.add("low", priority="low")
+    high_undated = store.add("high undated", priority="high")
+    high_dated = store.add("high dated", due=date(2026, 1, 31), priority="high")
+    assert [t.id for t in store.list(priority="high")] == [high_dated.id, high_undated.id]
+    assert [t.id for t in store.list(priority="low")] == [low.id]
+    assert store.list(priority="medium") == []
+    with pytest.raises(ValueError):
+        store.list(priority="urgent")

@@ -3,6 +3,9 @@
 from dataclasses import dataclass
 from datetime import date
 
+PRIORITIES: tuple[str, ...] = ("high", "medium", "low")
+DEFAULT_PRIORITY: str = "medium"
+
 
 class TodoNotFoundError(KeyError):
     """Raised when a todo id does not exist."""
@@ -15,6 +18,7 @@ class Todo:
     done: bool = False
     recurrence: str | None = None
     due: date | None = None
+    priority: str = DEFAULT_PRIORITY
 
 
 class TodoStore:
@@ -24,11 +28,21 @@ class TodoStore:
         self._todos: dict[int, Todo] = {}
         self._next_id = 1
 
-    def add(self, title: str, recurrence: str | None = None, due: date | None = None) -> Todo:
+    def add(
+        self,
+        title: str,
+        recurrence: str | None = None,
+        due: date | None = None,
+        priority: str = DEFAULT_PRIORITY,
+    ) -> Todo:
+        if priority not in PRIORITIES:
+            raise ValueError(f"invalid priority {priority!r}")
         title = title.strip()
         if not title:
             raise ValueError("title must not be empty")
-        todo = Todo(id=self._next_id, title=title, recurrence=recurrence, due=due)
+        todo = Todo(
+            id=self._next_id, title=title, recurrence=recurrence, due=due, priority=priority
+        )
         self._todos[todo.id] = todo
         self._next_id += 1
         return todo
@@ -43,7 +57,14 @@ class TodoStore:
         todo = self.get(todo_id)
         todo.done = True
         if todo.recurrence is not None:
-            self.add(todo.title, recurrence=todo.recurrence)
+            self.add(todo.title, recurrence=todo.recurrence, priority=todo.priority)
+        return todo
+
+    def set_priority(self, todo_id: int, priority: str) -> Todo:
+        if priority not in PRIORITIES:
+            raise ValueError(f"invalid priority {priority!r}")
+        todo = self.get(todo_id)
+        todo.priority = priority
         return todo
 
     def remove(self, todo_id: int) -> None:
@@ -62,8 +83,15 @@ class TodoStore:
         done_count = sum(1 for todo in self._todos.values() if todo.done)
         return open_count, done_count
 
-    def list(self, *, include_done: bool = True) -> list[Todo]:
-        todos = sorted(self._todos.values(), key=lambda t: (t.due is None, t.due or date.min, t.id))
+    def list(self, *, include_done: bool = True, priority: str | None = None) -> list[Todo]:
+        if priority is not None and priority not in PRIORITIES:
+            raise ValueError(f"invalid priority {priority!r}")
+        todos = sorted(
+            self._todos.values(),
+            key=lambda t: (PRIORITIES.index(t.priority), t.due is None, t.due or date.min, t.id),
+        )
+        if priority is not None:
+            todos = [t for t in todos if t.priority == priority]
         if include_done:
             return todos
         return [t for t in todos if not t.done]

@@ -7,9 +7,9 @@ Example:
 import sys
 from datetime import date
 
-from todo_app.store import TodoNotFoundError, TodoStore
+from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -24,6 +24,11 @@ def _parse_interval(token: str) -> str | None:
         if days >= 1:
             return f"{days}d"
     return None
+
+
+def _parse_priority(token: str) -> str | None:
+    """Return ``token`` when it is a known priority, or None if invalid."""
+    return token if token in PRIORITIES else None
 
 
 def _parse_due(token: str) -> date | None:
@@ -53,9 +58,10 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             title = args[i + 1]
             recurrence: str | None = None
             due: date | None = None
+            priority: str | None = None
             i += 2
             error: str | None = None
-            while i < len(args) and args[i] in ("every", "due"):
+            while i < len(args) and args[i] in ("every", "due", "priority"):
                 keyword = args[i]
                 if keyword == "every":
                     if i + 1 >= len(args):
@@ -65,6 +71,13 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     recurrence = _parse_interval(token)
                     if recurrence is None:
                         error = f"error: invalid interval {token!r}"
+                        break
+                elif keyword == "priority":
+                    token = args[i + 1] if i + 1 < len(args) else ""
+                    i += 2 if i + 1 < len(args) else 1
+                    priority = _parse_priority(token)
+                    if priority is None:
+                        error = f"error: invalid priority {token!r}"
                         break
                 else:
                     # A following command keyword is not a due date, so it stays a command.
@@ -78,7 +91,9 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             if error is not None:
                 out.append(error)
                 continue
-            todo = store.add(title, recurrence=recurrence, due=due)
+            todo = store.add(
+                title, recurrence=recurrence, due=due, priority=priority or DEFAULT_PRIORITY
+            )
             out.append(f"added {todo.id}: {todo.title}")
         elif cmd in ("done", "rm"):
             # A following command keyword is not an id, so it stays a command.
@@ -103,10 +118,33 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
             i += 2
+        elif cmd == "prio" and i + 1 < len(args):
+            todo_id = int(args[i + 1])
+            level = args[i + 2] if i + 2 < len(args) else ""
+            i += 3
+            priority = _parse_priority(level)
+            if priority is None:
+                out.append(f"error: invalid priority {level!r}")
+                continue
+            try:
+                store.set_priority(todo_id, priority)
+                out.append(f"prio {todo_id}: {priority}")
+            except TodoNotFoundError:
+                out.append(f"error: no todo {todo_id}")
         elif cmd == "list":
-            for todo in store.list():
+            priority: str | None = None
+            i += 1
+            if i < len(args) and args[i] not in _COMMANDS:
+                token = args[i]
+                i += 1
+                priority = _parse_priority(token)
+                if priority is None:
+                    out.append(f"error: invalid priority {token!r}")
+                    continue
+            for todo in store.list(priority=priority):
                 mark = "x" if todo.done else " "
-                line = f"[{mark}] {todo.id}: {todo.title}"
+                marker = "! " if todo.priority == "high" else "↓ " if todo.priority == "low" else ""
+                line = f"{marker}[{mark}] {todo.id}: {todo.title}"
                 if todo.recurrence is not None:
                     if todo.recurrence == "weekly":
                         line += " (weekly)"
@@ -116,7 +154,6 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     overdue = ", OVERDUE" if todo.due < date.today() else ""
                     line += f" (due {todo.due.isoformat()}{overdue})"
                 out.append(line)
-            i += 1
         elif cmd == "clear":
             out.append(f"cleared {store.clear_done()}")
             i += 1
