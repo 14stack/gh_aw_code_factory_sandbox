@@ -521,3 +521,88 @@ def test_list_leaves_following_command_keyword():
         "[ ] 2: b",
         "open 1, done 1",
     ]
+
+
+def test_title_renames_and_lists():
+    assert run(["add", "milk", "title", "1", "buy milk", "list"]) == [
+        "added 1: milk",
+        "title 1: buy milk",
+        "[ ] 1: buy milk",
+    ]
+
+
+def test_title_strips_whitespace():
+    assert run(["add", "milk", "title", "1", "  buy milk  ", "list"]) == [
+        "added 1: milk",
+        "title 1: buy milk",
+        "[ ] 1: buy milk",
+    ]
+
+
+def test_title_errors():
+    assert run(["title"]) == ["error: missing id"]
+    assert run(["add", "milk", "title", "list"]) == [
+        "added 1: milk",
+        "error: missing id",
+        "[ ] 1: milk",
+    ]
+    assert run(["title", "abc", "new"]) == ["error: invalid id 'abc'"]
+    assert run(["add", "milk", "title", "1"]) == [
+        "added 1: milk",
+        "error: missing title",
+    ]
+    assert run(["add", "milk", "title", "1", "   "]) == [
+        "added 1: milk",
+        "error: title must not be empty",
+    ]
+    assert run(["title", "7", "new"]) == ["error: no todo 7"]
+
+
+def test_title_invalid_id_reports_error_and_continues():
+    assert run(["add", "milk", "title", "abc", "list"]) == [
+        "added 1: milk",
+        "error: invalid id 'abc'",
+        "[ ] 1: milk",
+    ]
+    # After an invalid id one following non-command token is skipped.
+    assert run(["add", "milk", "title", "abc", "new", "list"]) == [
+        "added 1: milk",
+        "error: invalid id 'abc'",
+        "[ ] 1: milk",
+    ]
+
+
+def test_title_is_not_swallowed_by_add_due_or_list():
+    assert run(["add", "x", "add", "y", "due", "title", "1", "new"]) == [
+        "added 1: x",
+        "error: invalid due date ''",
+        "title 1: new",
+    ]
+    assert run(["add", "a", "list", "title", "1", "b"]) == [
+        "added 1: a",
+        "[ ] 1: a",
+        "title 1: b",
+    ]
+
+
+def test_title_after_valid_id_takes_command_keyword_as_title():
+    assert run(["add", "x", "title", "1", "list"]) == [
+        "added 1: x",
+        "title 1: list",
+    ]
+
+
+def test_title_works_on_completed_todos():
+    assert run(["add", "x", "done", "1", "title", "1", "y", "list"]) == [
+        "added 1: x",
+        "done 1",
+        "title 1: y",
+        "[x] 1: y",
+    ]
+
+
+def test_cli_persists_title_change_between_runs(tmp_path):
+    path = tmp_path / "todos.json"
+    assert run(["add", "pay rent"], TodoStore(path=path)) == ["added 1: pay rent"]
+    assert run(["title", "1", "pay the rent"], TodoStore(path=path)) == ["title 1: pay the rent"]
+    assert run(["list"], TodoStore(path=path)) == ["[ ] 1: pay the rent"]
