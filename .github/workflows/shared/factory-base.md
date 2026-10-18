@@ -38,3 +38,5 @@ safe-outputs:
 - Only change the labels you are explicitly told to change.
 - Call safe-output tools (labels, issue updates, PRs, reviews, merges) **directly as MCP tools**. Do not run the
   `safeoutputs` shell command, and pass only the parameters the tool schema lists.
+- If a shell command is denied, **don't retry it**: it will be denied again and burns your turn budget. Use a
+  command you are allowed to run, or continue without it.

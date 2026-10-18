@@ -168,6 +168,9 @@ You are the **reviewer** of the code factory. Review the pull request of sub-iss
 - `/tmp/gh-aw/agent/story.md`: the parent story, for context.
 - The PR's branch is checked out, so you can read the full files. `AGENTS.md` has the conventions.
 
+You can only **read**: `cat`, `grep`, `find`, `ls`, `head`, `tail`, `git diff`, `git log`, `git show`. You can't run
+tests, linters or the app, and you don't need to: CI already ran lint, format and tests on this PR, and they passed.
+
 ## Review
 
 Check, in this order:
