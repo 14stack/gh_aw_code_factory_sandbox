@@ -87,3 +87,30 @@ def test_remove_and_missing_ids():
         store.get(1)
     with pytest.raises(TodoNotFoundError):
         store.complete(42)
+
+
+def test_counts_on_empty_store():
+    assert TodoStore().counts() == (0, 0)
+
+
+def test_counts_open_only():
+    store = TodoStore()
+    store.add("a")
+    store.add("b")
+    assert store.counts() == (2, 0)
+
+
+def test_counts_open_and_done():
+    store = TodoStore()
+    store.add("a")
+    store.add("b")
+    store.add("c")
+    store.complete(2)
+    assert store.counts() == (2, 1)
+
+
+def test_counts_after_complete_spawns_recurrence():
+    store = TodoStore()
+    store.add("water plants", recurrence="3d")
+    store.complete(1)
+    assert store.counts() == (1, 1)
