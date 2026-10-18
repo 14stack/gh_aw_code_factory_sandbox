@@ -189,6 +189,8 @@ can't get from the story spec or the code: no repetition across fields, no resta
    leave sub-issues independent only when they touch different files.
 5. As few sub-issues as make sense: usually 1–4, never more than 20.
 6. Budget per sub-issue: `done_when` 2–6 items, `notes` 0–5 bullets, `tests` 1–4 lines.
+7. Never plan a change under `.github/` (workflows, CI, templates): GitHub refuses agents' pushes there. The story
+   names such changes as a human step; leave them out.
 
 ## What to do
 
