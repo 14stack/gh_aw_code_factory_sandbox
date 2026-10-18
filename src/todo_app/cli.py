@@ -5,8 +5,11 @@ Example:
 """
 
 import sys
+from datetime import date
 
 from todo_app.store import TodoNotFoundError, TodoStore
+
+_COMMANDS = frozenset({"add", "done", "rm", "list"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -23,6 +26,14 @@ def _parse_interval(token: str) -> str | None:
     return None
 
 
+def _parse_due(token: str) -> date | None:
+    """Return the due date for ``token``, or None if it is not an ISO date."""
+    try:
+        return date.fromisoformat(token)
+    except ValueError:
+        return None
+
+
 def run(args: list[str], store: TodoStore | None = None) -> list[str]:
     """Execute commands from ``args`` and return the output lines."""
     store = store or TodoStore()
@@ -33,16 +44,33 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
         if cmd == "add" and i + 1 < len(args):
             title = args[i + 1]
             recurrence: str | None = None
-            if i + 3 < len(args) and args[i + 2] == "every":
-                token = args[i + 3]
-                i += 4
-                recurrence = _parse_interval(token)
-                if recurrence is None:
-                    out.append(f"error: invalid interval {token!r}")
-                    continue
-            else:
-                i += 2
-            todo = store.add(title, recurrence=recurrence)
+            due: date | None = None
+            i += 2
+            error: str | None = None
+            while i < len(args) and args[i] in ("every", "due"):
+                keyword = args[i]
+                if keyword == "every":
+                    if i + 1 >= len(args):
+                        break
+                    token = args[i + 1]
+                    i += 2
+                    recurrence = _parse_interval(token)
+                    if recurrence is None:
+                        error = f"error: invalid interval {token!r}"
+                        break
+                else:
+                    # A following command keyword is not a due date, so it stays a command.
+                    has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+                    token = args[i + 1] if has_token else ""
+                    i += 2 if has_token else 1
+                    due = _parse_due(token)
+                    if due is None:
+                        error = f"error: invalid due date {token!r}"
+                        break
+            if error is not None:
+                out.append(error)
+                continue
+            todo = store.add(title, recurrence=recurrence, due=due)
             out.append(f"added {todo.id}: {todo.title}")
         elif cmd in ("done", "rm") and i + 1 < len(args):
             todo_id = int(args[i + 1])
@@ -65,6 +93,9 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                         line += " (weekly)"
                     else:
                         line += f" (every {todo.recurrence})"
+                if todo.due is not None:
+                    overdue = ", OVERDUE" if todo.due < date.today() else ""
+                    line += f" (due {todo.due.isoformat()}{overdue})"
                 out.append(line)
             i += 1
         else:

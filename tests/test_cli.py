@@ -1,3 +1,5 @@
+from datetime import date, timedelta
+
 from todo_app.cli import run
 
 
@@ -48,3 +50,62 @@ def test_invalid_intervals_are_rejected():
     assert run(["add", "water plants", "every", "fortnight", "list"]) == [
         "error: invalid interval 'fortnight'",
     ]
+
+
+def test_add_due_and_list_shows_due_suffix():
+    future = date.today() + timedelta(days=7)
+    assert run(["add", "milk", "due", str(future), "list"]) == [
+        "added 1: milk",
+        f"[ ] 1: milk (due {future.isoformat()})",
+    ]
+
+
+def test_list_orders_dated_first():
+    future = date.today() + timedelta(days=7)
+    assert run(["add", "undated", "add", "dated", "due", str(future), "list"]) == [
+        "added 1: undated",
+        "added 2: dated",
+        f"[ ] 2: dated (due {future.isoformat()})",
+        "[ ] 1: undated",
+    ]
+
+
+def test_invalid_due_date_rejected():
+    assert run(["add", "x", "due", "not-a-date", "list"]) == [
+        "error: invalid due date 'not-a-date'",
+    ]
+
+
+def test_missing_due_token_rejected():
+    assert run(["add", "x", "due", "list"]) == [
+        "error: invalid due date ''",
+    ]
+    assert run(["add", "x", "due"]) == ["error: invalid due date ''"]
+
+
+def test_past_due_marks_overdue():
+    past = date.today() - timedelta(days=1)
+    today = date.today()
+    future = date.today() + timedelta(days=1)
+    assert run(["add", "past", "due", str(past), "list"]) == [
+        "added 1: past",
+        f"[ ] 1: past (due {past.isoformat()}, OVERDUE)",
+    ]
+    assert run(["add", "today", "due", str(today), "list"]) == [
+        "added 1: today",
+        f"[ ] 1: today (due {today.isoformat()})",
+    ]
+    assert run(["add", "future", "due", str(future), "list"]) == [
+        "added 1: future",
+        f"[ ] 1: future (due {future.isoformat()})",
+    ]
+
+
+def test_recurrence_and_due_together():
+    future = date.today() + timedelta(days=7)
+    expected = [
+        "added 1: water plants",
+        f"[ ] 1: water plants (every 3d) (due {future.isoformat()})",
+    ]
+    assert run(["add", "water plants", "every", "3d", "due", str(future), "list"]) == expected
+    assert run(["add", "water plants", "due", str(future), "every", "3d", "list"]) == expected
