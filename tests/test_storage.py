@@ -164,12 +164,80 @@ def test_save_wraps_parent_directory_errors(tmp_path):
             "next_id": 1,
             "todos": [{"id": 1, "title": "a", "done": False, "due": 20260131}],
         },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "a",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": "urgent",
+                }
+            ],
+        },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "a",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": None,
+                }
+            ],
+        },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "a",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": 1,
+                }
+            ],
+        },
     ],
 )
 def test_load_rejects_invalid_documents(tmp_path, document):
     path = tmp_path / "todos.json"
     path.write_text(json.dumps(document), encoding="utf-8")
     with pytest.raises(StorageError):
+        load(path)
+
+
+@pytest.mark.parametrize("priority", ["urgent", None, 1])
+def test_load_rejects_invalid_priority(tmp_path, priority):
+    path = tmp_path / "todos.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": 1,
+                "next_id": 2,
+                "todos": [
+                    {
+                        "id": 1,
+                        "title": "a",
+                        "done": False,
+                        "recurrence": None,
+                        "due": None,
+                        "priority": priority,
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(StorageError, match=r"todo 1: invalid priority"):
         load(path)
 
 
