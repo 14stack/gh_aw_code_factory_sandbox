@@ -25,7 +25,7 @@ class TodoStore:
         self._next_id = 1
 
     def add(self, title: str, recurrence: str | None = None, due: date | None = None) -> Todo:
-        title = title.strip().upper()
+        title = title.strip()
         if not title:
             raise ValueError("title must not be empty")
         todo = Todo(id=self._next_id, title=title, recurrence=recurrence, due=due)
