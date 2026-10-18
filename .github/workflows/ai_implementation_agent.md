@@ -103,6 +103,10 @@ steps:
       fi
 safe-outputs:
   create-pull-request:
+    # The patch is computed against `base-branch` inside the agent job (the agent's `base` only applies later), so it
+    # must be the story branch, not the default branch. The safe_outputs job doesn't need `start`; there this resolves
+    # empty and the agent-provided `base` (allowed by allowed-base-branches) is used.
+    base-branch: ${{ needs.start.outputs.story_branch }}
     allowed-base-branches: ["story/*"]
     allowed-branches: ["sub/*"]
     preserve-branch-name: true
