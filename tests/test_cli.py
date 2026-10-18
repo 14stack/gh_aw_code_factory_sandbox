@@ -583,10 +583,28 @@ def test_title_is_not_swallowed_by_add_due_or_list():
         "[ ] 1: a",
         "title 1: b",
     ]
-    # ``add ... priority`` keeps its old token handling, so ``title`` follows a valid priority.
+    # ``title`` is never a priority token, so it follows a valid priority as a command.
     assert run(["add", "x", "priority", "high", "title", "1", "new"]) == [
         "added 1: x",
         "title 1: new",
+    ]
+
+
+def test_add_priority_does_not_swallow_title():
+    # ``title`` is not a priority, so it stays a command and ``1 new`` is its id and title.
+    assert run(["add", "x", "priority", "title", "1", "new"]) == [
+        "error: invalid priority ''",
+        "error: no todo 1",
+    ]
+    assert run(["add", "x", "priority", "title", "1", "new", "list"]) == [
+        "error: invalid priority ''",
+        "error: no todo 1",
+    ]
+    assert run(["add", "x", "add", "y", "priority", "title", "1", "new", "list"]) == [
+        "added 1: x",
+        "error: invalid priority ''",
+        "title 1: new",
+        "[ ] 1: new",
     ]
 
 

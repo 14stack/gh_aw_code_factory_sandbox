@@ -74,8 +74,10 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                         error = f"error: invalid interval {token!r}"
                         break
                 elif keyword == "priority":
-                    token = args[i + 1] if i + 1 < len(args) else ""
-                    i += 2 if i + 1 < len(args) else 1
+                    # ``title`` is never a priority, so it stays a command.
+                    has_token = i + 1 < len(args) and args[i + 1] != "title"
+                    token = args[i + 1] if has_token else ""
+                    i += 2 if has_token else 1
                     priority = _parse_priority(token)
                     if priority is None:
                         error = f"error: invalid priority {token!r}"
