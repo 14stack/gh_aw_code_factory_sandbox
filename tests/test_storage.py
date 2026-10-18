@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from todo_app import StorageError, Todo
-from todo_app.storage import default_path, load, save
+from todo_app.storage import default_path, document, load, save
 
 
 def test_default_path_uses_todo_file_env(monkeypatch, tmp_path):
@@ -269,3 +269,59 @@ def test_load_does_not_create_file(tmp_path):
     path: Path = tmp_path / "todos.json"
     load(path)
     assert list(tmp_path.iterdir()) == []
+
+
+def test_document_shape_for_mixed_todos():
+    todos = [
+        Todo(id=1, title="milk", done=False, recurrence=None, due=date(2026, 1, 31)),
+        Todo(id=2, title="water plants", done=True, recurrence="3d", due=None, priority="high"),
+        Todo(
+            id=3, title="weekly review", done=False, recurrence="weekly", due=None, priority="low"
+        ),
+    ]
+    assert document(todos, next_id=4) == {
+        "version": 1,
+        "next_id": 4,
+        "todos": [
+            {
+                "id": 1,
+                "title": "milk",
+                "done": False,
+                "recurrence": None,
+                "due": "2026-01-31",
+                "priority": "medium",
+            },
+            {
+                "id": 2,
+                "title": "water plants",
+                "done": True,
+                "recurrence": "3d",
+                "due": None,
+                "priority": "high",
+            },
+            {
+                "id": 3,
+                "title": "weekly review",
+                "done": False,
+                "recurrence": "weekly",
+                "due": None,
+                "priority": "low",
+            },
+        ],
+    }
+
+
+def test_document_accepts_any_iterable():
+    todos = (Todo(id=1, title="a"), Todo(id=2, title="b"))
+    assert [todo["id"] for todo in document(todos, next_id=3)["todos"]] == [1, 2]
+
+
+def test_save_writes_exactly_the_document(tmp_path):
+    path = tmp_path / "todos.json"
+    todos = [
+        Todo(id=1, title="milk", due=date(2026, 1, 31)),
+        Todo(id=2, title="water plants", done=True, recurrence="3d", priority="high"),
+    ]
+    save(path, todos, next_id=3)
+
+    assert json.loads(path.read_text(encoding="utf-8")) == document(todos, next_id=3)
