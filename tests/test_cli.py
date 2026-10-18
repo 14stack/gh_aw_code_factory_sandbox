@@ -1,6 +1,8 @@
+import sys
 from datetime import date, timedelta
 
-from todo_app.cli import run
+from todo_app.cli import main, run
+from todo_app.store import TodoStore
 
 
 def test_add_done_list():
@@ -162,3 +164,25 @@ def test_count_chains_with_other_commands():
         "[x] 1: a",
         "[ ] 2: b",
     ]
+
+
+def test_cli_persists_between_runs(tmp_path):
+    path = tmp_path / "todos.json"
+    assert run(["add", "buy milk"], TodoStore(path=path)) == ["added 1: buy milk"]
+    assert run(["list"], TodoStore(path=path)) == ["[ ] 1: buy milk"]
+    assert run(["count"], TodoStore(path=path)) == ["open 1, done 0"]
+
+
+def test_cli_reports_unreadable_file(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "todos.json"
+    corrupt = "{not json"
+    path.write_text(corrupt, encoding="utf-8")
+    monkeypatch.setenv("TODO_FILE", str(path))
+    monkeypatch.setattr(sys, "argv", ["todo", "add", "buy milk"])
+
+    assert main() == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert f"error: cannot read {path}:" in captured.err
+    assert path.read_text(encoding="utf-8") == corrupt
