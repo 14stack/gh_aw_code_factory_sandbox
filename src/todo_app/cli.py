@@ -146,16 +146,16 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
         elif cmd == "list":
-            priority: str | None = None
+            priority_filter: str | None = None
             i += 1
             if i < len(args) and args[i] not in _COMMANDS:
                 token = args[i]
                 i += 1
-                priority = _parse_priority(token)
-                if priority is None:
+                priority_filter = _parse_priority(token)
+                if priority_filter is None:
                     out.append(f"error: invalid priority {token!r}")
                     continue
-            for todo in store.list(priority=priority):
+            for todo in store.list(priority=priority_filter):
                 mark = "x" if todo.done else " "
                 marker = "! " if todo.priority == "high" else "↓ " if todo.priority == "low" else ""
                 line = f"{marker}[{mark}] {todo.id}: {todo.title}"
