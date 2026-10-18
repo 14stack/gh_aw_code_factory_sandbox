@@ -146,6 +146,35 @@ def test_invalid_rm_id_reports_error():
     ]
 
 
+def test_clear_chains_with_done_and_list():
+    assert run(["add", "a", "add", "b", "done", "1", "clear", "list"]) == [
+        "added 1: a",
+        "added 2: b",
+        "done 1",
+        "cleared 1",
+        "[ ] 2: b",
+    ]
+
+
+def test_clear_on_empty_store_prints_cleared_zero():
+    assert run(["clear"]) == ["cleared 0"]
+
+
+def test_clear_after_due_is_command_not_due_date():
+    out = run(["add", "x", "due", "clear", "list"])
+    assert out == ["error: invalid due date ''", "cleared 0"]
+    assert "error: invalid due date 'clear'" not in out
+
+
+def test_clear_removes_done_recurring_todo():
+    assert run(["add", "water plants", "every", "3d", "done", "1", "clear", "list"]) == [
+        "added 1: water plants",
+        "done 1",
+        "cleared 1",
+        "[ ] 2: water plants (every 3d)",
+    ]
+
+
 def test_count_command():
     assert run(["add", "a", "add", "b", "done", "1", "count"]) == [
         "added 1: a",

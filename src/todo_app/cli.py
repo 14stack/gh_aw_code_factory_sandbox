@@ -9,7 +9,7 @@ from datetime import date
 
 from todo_app.store import TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "count"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -116,6 +116,9 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     overdue = ", OVERDUE" if todo.due < date.today() else ""
                     line += f" (due {todo.due.isoformat()}{overdue})"
                 out.append(line)
+            i += 1
+        elif cmd == "clear":
+            out.append(f"cleared {store.clear_done()}")
             i += 1
         elif cmd == "count":
             open_count, done_count = store.counts()
