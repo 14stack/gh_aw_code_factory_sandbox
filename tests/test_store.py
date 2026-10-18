@@ -494,3 +494,70 @@ def test_store_with_path_persists_reopen(tmp_path):
     store.reopen(1)
 
     assert TodoStore(path).get(1).done is False
+
+
+def test_add_stores_tags():
+    store = TodoStore()
+    assert store.add("milk", tags=["home"]).tags == ("home",)
+    assert store.add("plain").tags == ()
+
+
+def test_add_dedupes_and_sorts_tags():
+    store = TodoStore()
+    todo = store.add("milk", tags=["work", "home", "work"])
+    assert todo.tags == ("home", "work")
+
+
+def test_add_rejects_invalid_tag():
+    store = TodoStore()
+    with pytest.raises(ValueError):
+        store.add("milk", tags=["Work"])
+    with pytest.raises(ValueError):
+        store.add("milk", tags=["no spaces"])
+    assert store.list() == []
+    assert store.add("milk").id == 1
+
+
+def test_list_filters_by_tag():
+    store = TodoStore()
+    work = store.add("work", tags=["work"])
+    home = store.add("home", tags=["home"])
+    both = store.add("both", tags=["work", "home"])
+    store.add("none")
+    assert [t.id for t in store.list(tags=["work"])] == [work.id, both.id]
+    assert [t.id for t in store.list(tags=["home"])] == [home.id, both.id]
+
+
+def test_list_requires_every_tag():
+    store = TodoStore()
+    store.add("work", tags=["work"])
+    both = store.add("both", tags=["work", "home"])
+    assert [t.id for t in store.list(tags=["work", "home"])] == [both.id]
+    assert store.list(tags=["work", "missing"]) == []
+
+
+def test_list_tag_combines_with_status_and_priority():
+    store = TodoStore()
+    high_open = store.add("high open", priority="high", tags=["work"])
+    high_done = store.add("high done", priority="high", tags=["work"])
+    low_open = store.add("low open", priority="low", tags=["work"])
+    store.complete(high_done.id)
+    assert [t.id for t in store.list(tags=["work"], status="open", priority="high")] == [
+        high_open.id
+    ]
+    assert [t.id for t in store.list(tags=["work"], status="done")] == [high_done.id]
+    assert [t.id for t in store.list(tags=["work"], priority="low")] == [low_open.id]
+
+
+def test_list_rejects_invalid_tag():
+    store = TodoStore()
+    store.add("milk", tags=["home"])
+    with pytest.raises(ValueError):
+        store.list(tags=["Home"])
+
+
+def test_complete_recurring_spawn_inherits_tags():
+    store = TodoStore()
+    store.add("water plants", recurrence="3d", tags=["home", "garden"])
+    store.complete(1)
+    assert store.get(2).tags == ("garden", "home")

@@ -1,5 +1,7 @@
 """Todo store, in memory or persisted to a JSON file."""
 
+import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -9,6 +11,17 @@ from todo_app import storage
 PRIORITIES: tuple[str, ...] = ("high", "medium", "low")
 STATUSES: tuple[str, ...] = ("open", "done", "overdue")
 DEFAULT_PRIORITY: str = "medium"
+TAG_PATTERN = re.compile(r"^[a-z0-9-]+$")
+
+
+def normalize_tags(tags: Iterable[str]) -> tuple[str, ...]:
+    """Return ``tags`` validated, deduplicated and sorted."""
+    normalized = set()
+    for tag in tags:
+        if not TAG_PATTERN.fullmatch(tag):
+            raise ValueError(f"invalid tag {tag!r}")
+        normalized.add(tag)
+    return tuple(sorted(normalized))
 
 
 class TodoNotFoundError(KeyError):
@@ -23,6 +36,7 @@ class Todo:
     recurrence: str | None = None
     due: date | None = None
     priority: str = DEFAULT_PRIORITY
+    tags: tuple[str, ...] = ()
 
 
 class TodoStore:
@@ -56,14 +70,21 @@ class TodoStore:
         recurrence: str | None = None,
         due: date | None = None,
         priority: str = DEFAULT_PRIORITY,
+        tags: Iterable[str] = (),
     ) -> Todo:
         if priority not in PRIORITIES:
             raise ValueError(f"invalid priority {priority!r}")
+        normalized_tags = normalize_tags(tags)
         title = title.strip()
         if not title:
             raise ValueError("title must not be empty")
         todo = Todo(
-            id=self._next_id, title=title, recurrence=recurrence, due=due, priority=priority
+            id=self._next_id,
+            title=title,
+            recurrence=recurrence,
+            due=due,
+            priority=priority,
+            tags=normalized_tags,
         )
         self._todos[todo.id] = todo
         self._next_id += 1
@@ -80,7 +101,12 @@ class TodoStore:
         todo = self.get(todo_id)
         todo.done = True
         if todo.recurrence is not None:
-            self.add(todo.title, recurrence=todo.recurrence, priority=todo.priority)
+            self.add(
+                todo.title,
+                recurrence=todo.recurrence,
+                priority=todo.priority,
+                tags=todo.tags,
+            )
         self._save()
         return todo
 
@@ -128,17 +154,21 @@ class TodoStore:
         include_done: bool = True,
         priority: str | None = None,
         status: str | None = None,
+        tags: Iterable[str] = (),
     ) -> list[Todo]:
         if priority is not None and priority not in PRIORITIES:
             raise ValueError(f"invalid priority {priority!r}")
         if status is not None and status not in STATUSES:
             raise ValueError(f"invalid status {status!r}")
+        required_tags = normalize_tags(tags)
         todos = sorted(
             self._todos.values(),
             key=lambda t: (PRIORITIES.index(t.priority), t.due is None, t.due or date.min, t.id),
         )
         if priority is not None:
             todos = [t for t in todos if t.priority == priority]
+        if required_tags:
+            todos = [t for t in todos if all(tag in t.tags for tag in required_tags)]
         if status == "open":
             todos = [t for t in todos if not t.done]
         elif status == "done":
