@@ -12,7 +12,7 @@ from todo_app.storage import StorageError, default_path
 from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, Todo, TodoNotFoundError, TodoStore
 
 _COMMANDS = frozenset(
-    {"add", "done", "rm", "list", "find", "clear", "count", "prio", "due", "export"}
+    {"add", "done", "undo", "rm", "list", "find", "clear", "count", "prio", "due", "export"}
 )
 
 
@@ -150,6 +150,25 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 else:
                     store.remove(todo_id)
                     out.append(f"removed {todo_id}")
+            except TodoNotFoundError:
+                out.append(f"error: no todo {todo_id}")
+            i += 2
+        elif cmd == "undo":
+            # A following command keyword is not an id, so it stays a command.
+            has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+            if not has_token:
+                out.append("error: missing id")
+                i += 1
+                continue
+            token = args[i + 1]
+            todo_id = _parse_id(token)
+            if todo_id is None:
+                out.append(f"error: invalid id {token!r}")
+                i += 2
+                continue
+            try:
+                store.reopen(todo_id)
+                out.append(f"reopened {todo_id}")
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
             i += 2
