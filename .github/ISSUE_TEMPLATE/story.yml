@@ -5,8 +5,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        Describe what you want in your own words. The AI refiner rewrites this issue into *Background*,
-        *Business requirements*, *Technical details*, *QA* and *Open questions to human*.
+        Describe what you want in your own words. The AI refiner rewrites this issue into a short *Summary*, any
+        *Questions* it has for you, and a collapsed *Spec* for the agents.
 
         **How to answer the refiner:** edit the issue body, write your answer after each `**Answer:**` line, then
         add the label `factory:refinement_requires_ai_review` again. Please don't use comments; the factory doesn't

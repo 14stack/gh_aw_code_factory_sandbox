@@ -198,7 +198,7 @@ safe-outputs:
           type: choice
           options: ["fixed", "blocked"]
         summary:
-          description: "One sentence: what you changed, or why you are blocked"
+          description: "At most 15 words: what you changed, or why you are blocked"
           required: true
           type: string
       steps:
@@ -258,9 +258,9 @@ ${{ github.repository }} needs changes. Its branch is checked out.
    arguments: `repo: "${{ github.repository }}"`, `pull_request_number` (from `pr_number.txt`, as a number),
    `branch` (the checked-out branch, `git branch --show-current`) and `message` (your commit message).
 5. For each review thread: `reply_to_pull_request_review_comment` (with its `comment_id`, `pull_request_number` and
-   `repo: "${{ github.repository }}"`) saying what you changed, or why you didn't; then
+   `repo: "${{ github.repository }}"`): one sentence, what you changed or why you didn't; then
    `resolve_pull_request_review_thread` (with its `thread_id`) for the ones you fixed.
-6. Call `report_fix` once with `outcome: fixed` and a one-sentence summary, **only if the push succeeded**.
+6. Call `report_fix` once with `outcome: fixed` and a summary of at most 15 words, **only if the push succeeded**.
 
 If you can't fix it (the feedback contradicts the sub-issue, or the checks can't be made to pass), don't push: call
 `report_fix` with `outcome: blocked` and the reason. Don't comment on issues or change labels. Never edit
