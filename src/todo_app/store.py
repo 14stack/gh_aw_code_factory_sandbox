@@ -12,6 +12,7 @@ class Todo:
     id: int
     title: str
     done: bool = False
+    recurrence: str | None = None
 
 
 class TodoStore:
@@ -21,11 +22,11 @@ class TodoStore:
         self._todos: dict[int, Todo] = {}
         self._next_id = 1
 
-    def add(self, title: str) -> Todo:
+    def add(self, title: str, recurrence: str | None = None) -> Todo:
         title = title.strip()
         if not title:
             raise ValueError("title must not be empty")
-        todo = Todo(id=self._next_id, title=title)
+        todo = Todo(id=self._next_id, title=title, recurrence=recurrence)
         self._todos[todo.id] = todo
         self._next_id += 1
         return todo
@@ -39,6 +40,8 @@ class TodoStore:
     def complete(self, todo_id: int) -> Todo:
         todo = self.get(todo_id)
         todo.done = True
+        if todo.recurrence is not None:
+            self.add(todo.title, recurrence=todo.recurrence)
         return todo
 
     def remove(self, todo_id: int) -> None:
