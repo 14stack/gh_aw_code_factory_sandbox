@@ -3,25 +3,37 @@
 # Circuit breaker: Actions variables ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT / ORCHESTRATOR_ENABLE_AUTO_MERGE (unset = off).
 name: "Factory: orchestrator"
 run-name: >-
-  ${{ github.event_name == 'workflow_run' && format('Orchestrator: after {0}', github.event.workflow_run.display_title)
+  ${{ github.event_name == 'issues'
+      && format('Orchestrator: #{0} {1} {2}', github.event.issue.number, github.event.action, github.event.label.name)
   || github.event_name == 'pull_request' && format('Orchestrator: PR #{0} closed', github.event.pull_request.number)
   || github.event_name == 'schedule' && 'Orchestrator: scheduled sweep'
-  || 'Orchestrator: manual run' }}
+  || inputs.issue && format('Orchestrator: #{0} {1}', inputs.issue, inputs.reason || 'manual run')
+  || 'Orchestrator: manual sweep' }}
 
-# No issue-event triggers (SPEC D28): every label change would start a run. The orchestrator acts when the splitter
-# (story ready to start) or the reviewer (PR approved) finishes, when a factory PR closes (merge), and on the sweep.
+# The only component that starts agents (SPEC D29). It runs when
+# - an agent run ends: every agent workflow dispatches it as its last job ("Orchestrator: #41 after Implementer");
+# - a human changes a factory label (a new story, answered questions, a resumed item). The factory's own label writes
+#   use the run's GITHUB_TOKEN, which starts no workflows, so only human changes start a run here;
+# - a human closes a factory PR (the story merge, or a sub-issue PR merged by hand; the orchestrator's own merges
+#   re-plan in the same run);
+# - hourly, as a safety net for lost events.
 on:
-  workflow_run:
-    workflows: ["Factory: splitter", "Factory: reviewer"]
-    types: [completed]
+  issues:
+    types: [labeled, unlabeled]
   pull_request:
     types: [closed]
   schedule:
-    - cron: "*/30 * * * *"  # safety net; events do the real work
+    - cron: "17 * * * *"  # safety net; events do the real work. GitHub delays or drops scheduled runs under load.
   workflow_dispatch:
     inputs:
-      story:
-        description: "Story issue number (empty: only sweep)"
+      issue:
+        description: "Story or sub-issue number (empty: only sweep)"
+        required: false
+      reason:
+        description: "Why this run was started; shown in the run name"
+        required: false
+      finished_run:
+        description: "Id of the agent run that dispatched this one (it is ending)"
         required: false
 
 permissions: {}
@@ -33,11 +45,18 @@ concurrency:
 
 jobs:
   orchestrate:
+    # FACTORY_ENABLED stops the whole factory: with agents off, dispatched runs would count as failed attempts.
     if: >-
-      github.event_name != 'pull_request' ||
-      startsWith(github.head_ref, 'sub/') || startsWith(github.head_ref, 'story/')
+      vars.FACTORY_ENABLED == 'true' && (
+        github.event_name == 'issues' && startsWith(github.event.label.name, 'factory:') ||
+        github.event_name == 'pull_request' && github.event.sender.type != 'Bot' &&
+          (startsWith(github.head_ref, 'sub/') || startsWith(github.head_ref, 'story/')) ||
+        github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      actions: write  # dispatch agents, read their runs
+      issues: write  # label writes with the run's token: they start no workflows
     steps:
       - name: Mint factory App token
         id: app
@@ -65,13 +84,16 @@ jobs:
         working-directory: .factory
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
+          WORKFLOW_TOKEN: ${{ github.token }}
           ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT: ${{ vars.ORCHESTRATOR_ENABLE_AUTO_IMPLEMENT }}
           ORCHESTRATOR_ENABLE_AUTO_MERGE: ${{ vars.ORCHESTRATOR_ENABLE_AUTO_MERGE }}
           PR: ${{ github.event.pull_request.number }}
-          STORY: ${{ inputs.story }}
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
+          FINISHED_RUN: ${{ inputs.finished_run }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           args=(--repo "$GITHUB_REPOSITORY" --sweep --run-url "$RUN_URL")
           [ -n "$PR" ] && args+=(--pr "$PR")
-          [ -n "$STORY" ] && args+=(--story "$STORY")
+          [ -n "$ISSUE" ] && args+=(--issue "$ISSUE")
+          [ -n "$FINISHED_RUN" ] && args+=(--finished-run "$FINISHED_RUN")
           python3 -m agents.ai_orchestrator.orchestrate "${args[@]}"
