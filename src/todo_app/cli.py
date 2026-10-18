@@ -7,9 +7,9 @@ Example:
 import sys
 from datetime import date
 
-from todo_app.store import TodoNotFoundError, TodoStore
+from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "count"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "count", "prio"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -24,6 +24,11 @@ def _parse_interval(token: str) -> str | None:
         if days >= 1:
             return f"{days}d"
     return None
+
+
+def _parse_priority(token: str) -> str | None:
+    """Return ``token`` when it is a known priority, or None if invalid."""
+    return token if token in PRIORITIES else None
 
 
 def _parse_due(token: str) -> date | None:
@@ -45,9 +50,10 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             title = args[i + 1]
             recurrence: str | None = None
             due: date | None = None
+            priority: str | None = None
             i += 2
             error: str | None = None
-            while i < len(args) and args[i] in ("every", "due"):
+            while i < len(args) and args[i] in ("every", "due", "priority"):
                 keyword = args[i]
                 if keyword == "every":
                     if i + 1 >= len(args):
@@ -57,6 +63,13 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     recurrence = _parse_interval(token)
                     if recurrence is None:
                         error = f"error: invalid interval {token!r}"
+                        break
+                elif keyword == "priority":
+                    token = args[i + 1] if i + 1 < len(args) else ""
+                    i += 2 if i + 1 < len(args) else 1
+                    priority = _parse_priority(token)
+                    if priority is None:
+                        error = f"error: invalid priority {token!r}"
                         break
                 else:
                     # A following command keyword is not a due date, so it stays a command.
@@ -70,7 +83,9 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             if error is not None:
                 out.append(error)
                 continue
-            todo = store.add(title, recurrence=recurrence, due=due)
+            todo = store.add(
+                title, recurrence=recurrence, due=due, priority=priority or DEFAULT_PRIORITY
+            )
             out.append(f"added {todo.id}: {todo.title}")
         elif cmd in ("done", "rm") and i + 1 < len(args):
             todo_id = int(args[i + 1])
@@ -87,7 +102,8 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
         elif cmd == "list":
             for todo in store.list():
                 mark = "x" if todo.done else " "
-                line = f"[{mark}] {todo.id}: {todo.title}"
+                marker = "! " if todo.priority == "high" else "↓ " if todo.priority == "low" else ""
+                line = f"{marker}[{mark}] {todo.id}: {todo.title}"
                 if todo.recurrence is not None:
                     if todo.recurrence == "weekly":
                         line += " (weekly)"

@@ -133,3 +133,113 @@ def test_count_chains_with_other_commands():
         "[x] 1: a",
         "[ ] 2: b",
     ]
+
+
+def test_add_with_priority_and_list_marks_high_and_low():
+    assert run(
+        [
+            "add",
+            "pay rent",
+            "priority",
+            "high",
+            "add",
+            "tidy desk",
+            "priority",
+            "low",
+            "add",
+            "milk",
+            "list",
+        ]
+    ) == [
+        "added 1: pay rent",
+        "added 2: tidy desk",
+        "added 3: milk",
+        "! [ ] 1: pay rent",
+        "[ ] 3: milk",
+        "↓ [ ] 2: tidy desk",
+    ]
+
+
+def test_priority_combines_with_every_and_due_in_any_order():
+    future = date.today() + timedelta(days=7)
+    expected = [
+        "added 1: water plants",
+        f"! [ ] 1: water plants (every 3d) (due {future.isoformat()})",
+    ]
+    assert (
+        run(
+            [
+                "add",
+                "water plants",
+                "priority",
+                "high",
+                "every",
+                "3d",
+                "due",
+                str(future),
+                "list",
+            ]
+        )
+        == expected
+    )
+    assert (
+        run(
+            [
+                "add",
+                "water plants",
+                "due",
+                str(future),
+                "every",
+                "3d",
+                "priority",
+                "high",
+                "list",
+            ]
+        )
+        == expected
+    )
+
+
+def test_list_orders_high_medium_low():
+    assert run(
+        [
+            "add",
+            "low one",
+            "priority",
+            "low",
+            "add",
+            "medium one",
+            "add",
+            "high one",
+            "priority",
+            "high",
+            "list",
+        ]
+    ) == [
+        "added 1: low one",
+        "added 2: medium one",
+        "added 3: high one",
+        "! [ ] 3: high one",
+        "[ ] 2: medium one",
+        "↓ [ ] 1: low one",
+    ]
+
+
+def test_invalid_priority_rejected():
+    assert run(["add", "x", "priority", "urgent", "list"]) == [
+        "error: invalid priority 'urgent'",
+    ]
+    assert run(["add", "x", "priority", "list"]) == [
+        "error: invalid priority 'list'",
+    ]
+    assert run(["add", "x", "priority"]) == ["error: invalid priority ''"]
+
+
+def test_due_does_not_swallow_prio_command():
+    # ``prio`` is a command keyword, so ``due`` reports a missing date and leaves it as a command.
+    assert run(["add", "x", "due", "prio", "1", "high"]) == [
+        "error: invalid due date ''",
+        "error: unknown command 'prio'",
+        "error: unknown command '1'",
+        "error: unknown command 'high'",
+    ]
