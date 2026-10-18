@@ -1,23 +1,20 @@
 ---
 description: "Factory splitter (SPEC §9.2): splits a refined story into dependent sub-issues, a story branch and a draft story PR"
 name: "Factory: splitter"
-run-name: "Splitter: story #${{ fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
+run-name: "Splitter: story #${{ inputs.issue }}"
 on:
-  # Routed (SPEC D28): gh-aw's generated router (agentic_commands.yml) is the only workflow listening to label events.
-  # It dispatches this workflow only when this label is added, so other label changes don't start a run here.
-  label_command:
-    name: "factory:refinement_done"
-    events: [issues]
-    remove_label: false  # factory labels are state, not one-shot commands
-    strategy: decentralized
-  bots: ["gh-aw-code-factory"]  # the factory App sets the label (humans for the refiner)
-  reaction: none
-  status-comment: false
+  # Started only by the orchestrator (SPEC D29). It finds an issue's runs by the run name, so keep its
+  # "<Role>: <story|sub-issue> #<n>" form.
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Story number"
+        required: true
+        type: string
 concurrency:
-  group: "factory-splitter-${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
-  job-discriminator: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
-# The ai_needs_human guard lives in the deterministic code: under workflow_dispatch the issue's labels aren't in the
-# event payload.
+  group: "factory-splitter-${{ inputs.issue }}"
+  job-discriminator: ${{ inputs.issue }}
+# The ai_needs_human and stale-dispatch guards live in the deterministic code: a dispatch carries no labels.
 if: vars.FACTORY_ENABLED == 'true'
 permissions:
   contents: read
@@ -52,51 +49,30 @@ steps:
   - name: Save the story for the agent
     env:
       GH_TOKEN: ${{ github.token }}
-      ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
+      ISSUE: ${{ inputs.issue }}
     run: |
       mkdir -p /tmp/gh-aw/agent
       gh issue view "$ISSUE" --repo "$GITHUB_REPOSITORY" --json title --jq .title > /tmp/gh-aw/agent/story-title.txt
       gh issue view "$ISSUE" --repo "$GITHUB_REPOSITORY" --json body --jq .body > /tmp/gh-aw/agent/story.md
       cat /tmp/gh-aw/agent/story-title.txt
 jobs:
-  # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
-  # agent reported nothing. The first time, retry by re-applying the trigger label; then flag a human.
-  on_failure:
-    needs: [agent, detection]
-    if: >-
-      always() && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
-      (needs.agent.result == 'success' && !contains(needs.agent.outputs.output_types, 'create_sub_issue') && !contains(needs.agent.outputs.output_types, 'split_too_large')))
+  # Hands control back to the orchestrator (SPEC D29), whatever happened above: it reads the issue's new state and
+  # starts the next agent, retries this one, or asks a human. `finished_run` tells it this run is ending.
+  wake_orchestrator:
+    needs: [activation, agent, detection, safe_outputs, create_sub_issue, split_too_large]
+    if: ${{ !cancelled() && needs.activation.result == 'success' }}
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
-      - name: Mint factory App token
-        id: app
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
-          private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |-
-            ${{ github.event.repository.name }}
-            gh_aw_code_factory
-          permission-contents: read
-          permission-issues: write
-      - name: Check out factory helpers
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: ${{ github.repository_owner }}/gh_aw_code_factory
-          ref: ${{ vars.FACTORY_REF || 'claude/charming-knuth-6m2xdz' }}
-          token: ${{ steps.app.outputs.token }}
-          path: .factory
-          persist-credentials: false
-      - name: Retry once, then flag a human
-        working-directory: .factory
+      - name: Dispatch the orchestrator
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
-          ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ inputs.issue }}
+          RUN_ID: ${{ github.run_id }}  # in env, not inline: gh-aw replaces a step's env when `run` has expressions
         run: |
-          python3 -m agents.common.failure --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --agent ai_issue_splitter \
-            --trigger factory:refinement_done --kind story --run-url "$RUN_URL"
+          gh workflow run ai_orchestrator.yml --repo "$GITHUB_REPOSITORY" -f issue="$ISSUE" -f finished_run="$RUN_ID" \
+            -f reason="after Splitter"
 safe-outputs:
   jobs:
     # Deterministic half (agents/ai_issue_splitter/apply.py): validates the plan, then creates the story branch,
@@ -106,6 +82,8 @@ safe-outputs:
         Propose one sub-issue of the story. Call once per sub-issue (1-20 calls). Nothing is created until the run
         ends; then all sub-issues are created together, in dependency order.
       runs-on: ubuntu-latest
+      permissions:
+        issues: write
       max: 20
       if: needs.detection.result == 'success'
       inputs:
@@ -163,7 +141,8 @@ safe-outputs:
           working-directory: .factory
           env:
             GH_TOKEN: ${{ steps.app.outputs.token }}
-            STORY: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
+            WORKFLOW_TOKEN: ${{ github.token }}  # label writes: start no workflows
+            STORY: ${{ inputs.issue }}
             MODE: ${{ github.job == 'split_too_large' && 'too_large' || 'split' }}
             RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           run: |
@@ -173,6 +152,8 @@ safe-outputs:
       description: >-
         Report that the story cannot be split into at most 20 sub-issues. Call it instead of create_sub_issue.
       runs-on: ubuntu-latest
+      permissions:
+        issues: write
       if: needs.detection.result == 'success'
       inputs:
         reason:
@@ -184,7 +165,7 @@ safe-outputs:
 
 # AI issue splitter
 
-You are the **splitter** of the code factory. Story issue #${{ github.event.issue.number }} in
+You are the **splitter** of the code factory. Story issue #${{ inputs.issue }} in
 ${{ github.repository }} is refined. Split it into small sub-issues that developers (AI agents) implement one at a
 time, each as one pull request into the story branch.
 

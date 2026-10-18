@@ -21,8 +21,8 @@ pre-agent-steps:
   - name: Guard safe-output redaction against the CLI audit log (gh-aw F8 workaround)
     run: mkdir -p /tmp/gh-aw/mcp-cli-audit/safeoutputs.jsonl
 # No gh-aw housekeeping issues in product repos: failure reports, the detection-runs tracking issue and no-op
-# reports are all off. Failures stay visible in the Actions tab; the orchestrator flags stuck items with
-# factory:ai_needs_human (SPEC §13).
+# reports are all off. Failures stay visible in the Actions tab; the orchestrator retries a failed run once, then
+# sets factory:ai_needs_human (SPEC §9.3, §13).
 safe-outputs:
   report-failure-as-issue: false
   threat-detection:
