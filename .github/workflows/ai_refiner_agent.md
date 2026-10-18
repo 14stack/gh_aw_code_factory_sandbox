@@ -201,5 +201,7 @@ Rules:
 - A question has at most one extra sentence of context, only if the options don't make it clear. Keep the headings of
   existing questions (`### Q2 — ...`); write new ones as `### Q — ...`, they are numbered automatically.
 - If no question is open, "Questions" contains only `_No open questions._`.
+- Agents can't change files under `.github/` (workflows, CI, templates): GitHub refuses those pushes. Keep such
+  changes out of the requirements and end the Summary with `Human step: <the change, one line>`.
 - Don't write "Decisions" or "Automation log"; both are maintained automatically. Don't use HTML comments.
 - Don't comment on the issue, change labels or edit files. The `apply_refinement` tool performs the update.

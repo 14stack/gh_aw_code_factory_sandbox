@@ -243,6 +243,6 @@ ${{ github.repository }} and open one pull request into its story branch.
      reviewer reads the diff and CI shows the checks.
 8. Call `report_implementation` with `outcome: pr_opened` and a summary of at most 15 words.
 
-If you cannot make the checks pass, or the sub-issue is ambiguous or contradicts the code, don't open a PR: call
-`report_implementation` with `outcome: blocked` and explain why in the summary. Don't comment on issues or change
-labels; the factory does that.
+If you cannot make the checks pass, the sub-issue needs a change under `.github/` (GitHub refuses that push), or
+it is ambiguous or contradicts the code, don't open a PR: call `report_implementation` with `outcome: blocked` and
+explain why in the summary. Don't comment on issues or change labels; the factory does that.
