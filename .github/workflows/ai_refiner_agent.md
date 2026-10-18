@@ -134,7 +134,7 @@ block that.
 5. **Choose the outcome:**
    - `done`: nothing blocks implementation, and "Open questions to human" contains `_No open questions._`.
    - `needs_human_review`: at least one blocking question remains. Ask at most 5 per iteration, most important
-     first. Give each one context, options and your recommendation, so the human can answer in one line.
+     first. Give each one **Context**, **Options** and your **Recommendation**, so the human can answer in one line.
    - `too_large`: write one question `### Q — How should this story be split?`, whose context lists 2–5 smaller
      stories you suggest (a title and one line each).
 6. Call the `apply_refinement` tool **exactly once** with the outcome, the complete new body and a one-sentence
@@ -169,7 +169,9 @@ How the story is verified: the test types and concrete test files or cases (for 
 
 ### Q — <question>
 
-<context, options, your recommendation>
+**Context:** <what is unclear and why it matters>
+**Options:** <a) ..., b) ...>
+**Recommendation:** <your pick and why>
 
 **Answer:** _(write your answer here)_
 
