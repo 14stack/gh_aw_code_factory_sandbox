@@ -77,6 +77,44 @@ jobs:
           ISSUE: ${{ github.event.issue.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 -m agents.ai_implementation_agent.lifecycle start --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --run-url "$RUN_URL"
+  # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
+  # agent reported nothing. The first time, retry by re-applying the trigger label; then flag a human.
+  on_failure:
+    needs: [agent, detection]
+    if: >-
+      always() && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
+      (needs.agent.result == 'success' && !contains(needs.agent.outputs.output_types, 'report_implementation')))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mint factory App token
+        id: app
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |-
+            ${{ github.event.repository.name }}
+            gh_aw_code_factory
+          permission-contents: read
+          permission-issues: write
+      - name: Check out factory helpers
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: ${{ github.repository_owner }}/gh_aw_code_factory
+          ref: ${{ vars.FACTORY_REF || 'claude/charming-knuth-6m2xdz' }}
+          token: ${{ steps.app.outputs.token }}
+          path: .factory
+          persist-credentials: false
+      - name: Retry once, then flag a human
+        working-directory: .factory
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 -m agents.common.failure --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --agent ai_implementation_agent \
+            --trigger factory:sub_issue_implementation_ready --clear factory:sub_issue_implementation_in_progress --kind sub --run-url "$RUN_URL"
 checkout:
   ref: ${{ needs.start.outputs.story_branch }}
 steps:
