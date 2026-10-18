@@ -9,7 +9,7 @@ from datetime import date
 
 from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "count", "prio"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -35,6 +35,14 @@ def _parse_due(token: str) -> date | None:
     """Return the due date for ``token``, or None if it is not an ISO date."""
     try:
         return date.fromisoformat(token)
+    except ValueError:
+        return None
+
+
+def _parse_id(token: str) -> int | None:
+    """Return the todo id for ``token``, or None if it is not an integer."""
+    try:
+        return int(token)
     except ValueError:
         return None
 
@@ -87,8 +95,19 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 title, recurrence=recurrence, due=due, priority=priority or DEFAULT_PRIORITY
             )
             out.append(f"added {todo.id}: {todo.title}")
-        elif cmd in ("done", "rm") and i + 1 < len(args):
-            todo_id = int(args[i + 1])
+        elif cmd in ("done", "rm"):
+            # A following command keyword is not an id, so it stays a command.
+            has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+            if not has_token:
+                out.append("error: missing id")
+                i += 1
+                continue
+            token = args[i + 1]
+            todo_id = _parse_id(token)
+            if todo_id is None:
+                out.append(f"error: invalid id {token!r}")
+                i += 2
+                continue
             try:
                 if cmd == "done":
                     store.complete(todo_id)
@@ -135,6 +154,9 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     overdue = ", OVERDUE" if todo.due < date.today() else ""
                     line += f" (due {todo.due.isoformat()}{overdue})"
                 out.append(line)
+        elif cmd == "clear":
+            out.append(f"cleared {store.clear_done()}")
+            i += 1
         elif cmd == "count":
             open_count, done_count = store.counts()
             out.append(f"open {open_count}, done {done_count}")
