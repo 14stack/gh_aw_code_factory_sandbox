@@ -6,8 +6,8 @@ github-app:
   client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
   private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
 # OpenRouter models are not in gh-aw's pricing catalog; without a price the API proxy rejects every request.
-# Fallback rate in $ per 1M tokens, set slightly above z-ai/glm-5.3-flash (~$0.09 in / $0.30 out on OpenRouter)
-# so max-ai-credits budgets stay meaningful. Raise it if FACTORY_MODEL points at a pricier model.
+# Fallback rate in $ per 1M tokens, the same for every model, so AI credits measure token volume and max-ai-credits
+# budgets stay comparable across models. Calibrated on z-ai/glm-5.3-flash (~$0.09 in / $0.30 out on OpenRouter).
 models:
   default-ai-credits-pricing:
     input: 0.1
@@ -20,11 +20,12 @@ models:
 pre-agent-steps:
   - name: Guard safe-output redaction against the CLI audit log (gh-aw F8 workaround)
     run: mkdir -p /tmp/gh-aw/mcp-cli-audit/safeoutputs.jsonl
-# No gh-aw housekeeping issues in product repos: failure reports, the detection-runs tracking issue and no-op
-# reports are all off. Failures stay visible in the Actions tab; the orchestrator flags stuck items with
-# factory:ai_needs_human (SPEC §13).
+# No gh-aw housekeeping issues in product repos: failure reports, failed-jobs reports, the detection-runs tracking
+# issue and no-op reports are all off. Failures stay visible in the Actions tab; the orchestrator retries a failed run once, then
+# sets factory:ai_needs_human (SPEC §9.3, §13).
 safe-outputs:
   report-failure-as-issue: false
+  report-failed-jobs: false  # "[aw] Failed jobs" issues for failed custom jobs
   threat-detection:
     report-as-issue: false
   noop:

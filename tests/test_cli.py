@@ -138,3 +138,27 @@ def test_clear_removes_done_recurring_todo():
         "cleared 1",
         "[ ] 2: water plants (every 3d)",
     ]
+
+
+def test_count_command():
+    assert run(["add", "a", "add", "b", "done", "1", "count"]) == [
+        "added 1: a",
+        "added 2: b",
+        "done 1",
+        "open 1, done 1",
+    ]
+
+
+def test_count_on_empty_store():
+    assert run(["count"]) == ["open 0, done 0"]
+
+
+def test_count_chains_with_other_commands():
+    assert run(["add", "a", "add", "b", "done", "1", "count", "list"]) == [
+        "added 1: a",
+        "added 2: b",
+        "done 1",
+        "open 1, done 1",
+        "[x] 1: a",
+        "[ ] 2: b",
+    ]

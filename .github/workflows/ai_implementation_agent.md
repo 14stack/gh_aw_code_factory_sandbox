@@ -1,23 +1,20 @@
 ---
 description: "Factory implementer (SPEC §9.4): implements one sub-issue and opens a PR into the story branch"
 name: "Factory: implementer"
-run-name: "Implementer: sub-issue #${{ fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
+run-name: "Implementer: sub-issue #${{ inputs.issue }}"
 on:
-  # Routed (SPEC D28): gh-aw's generated router (agentic_commands.yml) is the only workflow listening to label events.
-  # It dispatches this workflow only when this label is added, so other label changes don't start a run here.
-  label_command:
-    name: "factory:sub_issue_implementation_ready"
-    events: [issues]
-    remove_label: false  # factory labels are state, not one-shot commands
-    strategy: decentralized
-  bots: ["gh-aw-code-factory"]  # the factory App sets the label (humans for the refiner)
-  reaction: none
-  status-comment: false
+  # Started only by the orchestrator (SPEC D29). It finds an issue's runs by the run name, so keep its
+  # "<Role>: <story|sub-issue> #<n>" form.
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "Sub-issue number"
+        required: true
+        type: string
 concurrency:
-  group: "factory-implementer-${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}"
-  job-discriminator: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
-# The ai_needs_human guard lives in the deterministic code: under workflow_dispatch the issue's labels aren't in the
-# event payload.
+  group: "factory-implementer-${{ inputs.issue }}"
+  job-discriminator: ${{ inputs.issue }}
+# The ai_needs_human and stale-dispatch guards live in the deterministic code: a dispatch carries no labels.
 if: vars.FACTORY_ENABLED == 'true'
 permissions:
   contents: read
@@ -32,7 +29,7 @@ engine:
     COPILOT_PROVIDER_TYPE: openai
     COPILOT_PROVIDER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     # Code-writing agents can use a stronger model (FACTORY_MODEL_CODE) than the planning/review agents.
-    COPILOT_MODEL: ${{ vars.FACTORY_MODEL_CODE || vars.FACTORY_MODEL || 'z-ai/glm-5.3-flash' }}
+    COPILOT_MODEL: ${{ vars.FACTORY_MODEL_CODE || vars.FACTORY_MODEL || 'deepseek/deepseek-v4.1-flash-1017' }}
 sandbox:
   agent:
     model-fallback: false  # pass the OpenRouter model slug through verbatim
@@ -56,6 +53,8 @@ jobs:
   start:
     needs: activation
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
     outputs:
       proceed: ${{ steps.start.outputs.proceed }}
       story: ${{ steps.start.outputs.story }}
@@ -87,47 +86,27 @@ jobs:
         working-directory: .factory
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
-          ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
+          WORKFLOW_TOKEN: ${{ github.token }}  # label writes: start no workflows
+          ISSUE: ${{ inputs.issue }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 -m agents.ai_implementation_agent.lifecycle start --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --run-url "$RUN_URL"
-  # Deterministic failure handling (agents/common/failure.py): the agent run failed, threat detection failed, or the
-  # agent reported nothing. The first time, retry by re-applying the trigger label; then flag a human.
-  on_failure:
-    needs: [agent, detection, start]
-    if: >-
-      always() && needs.start.outputs.proceed == 'true' && (needs.agent.result == 'failure' || needs.detection.result == 'failure' ||
-      (needs.agent.result == 'success' && !contains(needs.agent.outputs.output_types, 'report_implementation')))
+  # Hands control back to the orchestrator (SPEC D29), whatever happened above: it reads the issue's new state and
+  # starts the next agent, retries this one, or asks a human. `finished_run` tells it this run is ending.
+  wake_orchestrator:
+    needs: [start, agent, detection, safe_outputs, report_implementation]
+    if: ${{ !cancelled() && needs.start.result != 'skipped' }}
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
-      - name: Mint factory App token
-        id: app
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          client-id: ${{ vars.FACTORY_APP_CLIENT_ID }}
-          private-key: ${{ secrets.FACTORY_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |-
-            ${{ github.event.repository.name }}
-            gh_aw_code_factory
-          permission-contents: read
-          permission-issues: write
-      - name: Check out factory helpers
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          repository: ${{ github.repository_owner }}/gh_aw_code_factory
-          ref: ${{ vars.FACTORY_REF || 'claude/charming-knuth-6m2xdz' }}
-          token: ${{ steps.app.outputs.token }}
-          path: .factory
-          persist-credentials: false
-      - name: Retry once, then flag a human
-        working-directory: .factory
+      - name: Dispatch the orchestrator
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
-          ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ inputs.issue }}
+          RUN_ID: ${{ github.run_id }}  # in env, not inline: gh-aw replaces a step's env when `run` has expressions
         run: |
-          python3 -m agents.common.failure --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" --agent ai_implementation_agent \
-            --trigger factory:sub_issue_implementation_ready --clear factory:sub_issue_implementation_in_progress --kind sub --run-url "$RUN_URL"
+          gh workflow run ai_orchestrator.yml --repo "$GITHUB_REPOSITORY" -f issue="$ISSUE" -f finished_run="$RUN_ID" \
+            -f reason="after Implementer"
 checkout:
   ref: ${{ needs.start.outputs.story_branch }}
 steps:
@@ -144,7 +123,7 @@ steps:
     if: needs.start.outputs.proceed == 'true'
     env:
       GH_TOKEN: ${{ github.token }}
-      ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
+      ISSUE: ${{ inputs.issue }}
       STORY: ${{ needs.start.outputs.story }}
       STORY_BRANCH: ${{ needs.start.outputs.story_branch }}
       SUB_BRANCH: ${{ needs.start.outputs.sub_branch }}
@@ -186,6 +165,8 @@ safe-outputs:
         Report the result. Call it exactly once, last: after create_pull_request, or instead of it when you are
         blocked.
       runs-on: ubuntu-latest
+      permissions:
+        issues: write
       needs: [safe_outputs]
       inputs:
         outcome:
@@ -223,7 +204,8 @@ safe-outputs:
           working-directory: .factory
           env:
             GH_TOKEN: ${{ steps.app.outputs.token }}
-            ISSUE: ${{ github.event.issue.number || fromJSON(inputs.aw_context || '{}').item_number || inputs.item_number }}
+            WORKFLOW_TOKEN: ${{ github.token }}  # label writes: start no workflows
+            ISSUE: ${{ inputs.issue }}
             RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           run: |
             python3 -m agents.ai_implementation_agent.lifecycle finish --repo "$GITHUB_REPOSITORY" --issue "$ISSUE" \
@@ -232,7 +214,7 @@ safe-outputs:
 
 # AI implementation agent
 
-You are the **developer** of the code factory. Implement sub-issue #${{ github.event.issue.number }} in
+You are the **developer** of the code factory. Implement sub-issue #${{ inputs.issue }} in
 ${{ github.repository }} and open one pull request into its story branch.
 
 ## Inputs
@@ -256,7 +238,7 @@ ${{ github.repository }} and open one pull request into its story branch.
 7. Call `create_pull_request` with:
    - `branch`: the `sub_branch`; `base`: the `story_branch` (both from `branches.txt`);
    - `title`: the sub-issue title;
-   - `body`: a short summary, then the line `Part of #${{ github.event.issue.number }}`, the acceptance criteria as
+   - `body`: a short summary, then the line `Part of #${{ inputs.issue }}`, the acceptance criteria as
      a checked list, and the test commands you ran with their results.
 8. Call `report_implementation` with `outcome: pr_opened` and a one-sentence summary.
 

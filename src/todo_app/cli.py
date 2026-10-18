@@ -1,7 +1,7 @@
 """Command-line interface that runs a sequence of todo commands against one store.
 
 Example:
-    todo add "buy milk" add "write spec" done 1 list
+    todo add "buy milk" add "write spec" done 1 list count
 """
 
 import sys
@@ -9,7 +9,7 @@ from datetime import date
 
 from todo_app.store import TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "clear"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -100,6 +100,10 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             i += 1
         elif cmd == "clear":
             out.append(f"cleared {store.clear_done()}")
+            i += 1
+        elif cmd == "count":
+            open_count, done_count = store.counts()
+            out.append(f"open {open_count}, done {done_count}")
             i += 1
         else:
             out.append(f"error: unknown command {cmd!r}")
