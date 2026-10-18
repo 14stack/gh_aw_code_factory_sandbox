@@ -596,3 +596,78 @@ def test_export_on_empty_store():
     assert run(["export"]) == []
     assert run(["export", "csv"]) == ["id,title,done,recurrence,due,priority"]
     assert run(["export", "json"]) == ['{"version": 1, "next_id": 1, "todos": []}']
+
+
+def test_due_sets_iso_date_and_relative_and_none():
+    store = TodoStore()
+    assert run(["add", "milk"], store) == ["added 1: milk"]
+    assert run(["due", "1", "2026-11-01", "list"], store) == [
+        "[ ] 1: milk (due 2026-11-01)",
+        "[ ] 1: milk (due 2026-11-01)",
+    ]
+    assert run(["due", "1", "+3d"], store) == [
+        f"[ ] 1: milk (due {date.today() + timedelta(days=3)})",
+    ]
+    assert run(["due", "1", "none", "list"], store) == [
+        "[ ] 1: milk",
+        "[ ] 1: milk",
+    ]
+
+
+def test_due_errors():
+    assert run(["due", "7", "2026-11-01"]) == ["error: no todo 7"]
+    store = TodoStore()
+    assert run(["add", "x"], store) == ["added 1: x"]
+    assert run(["due", "1", "tomorrow", "list"], store) == [
+        "error: invalid due date 'tomorrow'",
+        "[ ] 1: x",
+    ]
+    assert run(["due", "1", "+0d"], store) == ["error: invalid due date '+0d'"]
+    assert run(["due", "1"], store) == ["error: invalid due date ''"]
+
+
+def test_due_invalid_id_reports_error_and_continues():
+    assert run(["due", "abc", "2026-11-01"]) == ["error: invalid id 'abc'"]
+    store = TodoStore()
+    assert run(["add", "milk"], store) == ["added 1: milk"]
+    assert run(["due", "abc", "2026-11-01", "list"], store) == [
+        "error: invalid id 'abc'",
+        "[ ] 1: milk",
+    ]
+
+
+def test_due_missing_id_reports_error():
+    assert run(["due"]) == ["error: missing id"]
+    store = TodoStore()
+    assert run(["add", "milk"], store) == ["added 1: milk"]
+    assert run(["due", "list"], store) == ["error: missing id", "[ ] 1: milk"]
+
+
+def test_due_keeps_recurrence():
+    store = TodoStore()
+    assert run(["add", "water", "every", "3d"], store) == ["added 1: water"]
+    assert run(["due", "1", "2026-11-01", "list"], store) == [
+        "[ ] 1: water (every 3d) (due 2026-11-01)",
+        "[ ] 1: water (every 3d) (due 2026-11-01)",
+    ]
+    assert run(["due", "1", "none", "list"], store) == [
+        "[ ] 1: water (every 3d)",
+        "[ ] 1: water (every 3d)",
+    ]
+
+
+def test_due_does_not_swallow_list_command():
+    store = TodoStore()
+    assert run(["add", "x"], store) == ["added 1: x"]
+    assert run(["due", "1", "list"], store) == ["error: invalid due date 'list'"]
+
+
+def test_cli_persists_due_change_between_runs(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    run(["add", "milk"], store)
+    run(["due", "1", "2026-11-01"], store)
+    reloaded = TodoStore(path)
+    assert reloaded.get(1).due == date(2026, 11, 1)
+    run(["due", "1", "none"], reloaded)
+    assert TodoStore(path).get(1).due is None
