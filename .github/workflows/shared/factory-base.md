@@ -12,6 +12,10 @@ models:
   default-ai-credits-pricing:
     input: 0.1
     output: 0.35
+# The API proxy blocks a run after this many model calls in a row without a prompt-cache hit (gh-aw default 5).
+# Anthropic models via OpenRouter's OpenAI-compatible API are never cached (no cache_control breakpoints), so with
+# the default every Claude run stopped at its 6th call. max-turns and max-ai-credits still bound a run.
+max-turn-cache-misses: 100
 # Workaround for a gh-aw 0.92.4 bug (P0 finding F8): safeoutputs is always mounted as a shell CLI, and each CLI call
 # appends to /tmp/gh-aw/mcp-cli-audit/safeoutputs.jsonl. Secret redaction mistakes that audit log for safe-output
 # records (same file name), deletes it and fails the agent job, so every safe output of the run is lost.
