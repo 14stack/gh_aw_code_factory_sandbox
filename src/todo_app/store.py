@@ -50,6 +50,12 @@ class TodoStore:
         self.get(todo_id)
         del self._todos[todo_id]
 
+    def clear_done(self) -> int:
+        done_ids = [todo_id for todo_id, todo in self._todos.items() if todo.done]
+        for todo_id in done_ids:
+            del self._todos[todo_id]
+        return len(done_ids)
+
     def list(self, *, include_done: bool = True) -> list[Todo]:
         todos = sorted(self._todos.values(), key=lambda t: (t.due is None, t.due or date.min, t.id))
         if include_done:
