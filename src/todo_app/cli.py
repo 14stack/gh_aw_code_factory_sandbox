@@ -7,10 +7,11 @@ Example:
 import sys
 from datetime import date
 
+from todo_app import export
 from todo_app.storage import StorageError, default_path
 from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, TodoNotFoundError, TodoStore
 
-_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio"})
+_COMMANDS = frozenset({"add", "done", "rm", "list", "clear", "count", "prio", "export"})
 
 
 def _parse_interval(token: str) -> str | None:
@@ -168,6 +169,17 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     overdue = ", OVERDUE" if todo.due < date.today() else ""
                     line += f" (due {todo.due.isoformat()}{overdue})"
                 out.append(line)
+        elif cmd == "export":
+            fmt = export.DEFAULT_FORMAT
+            i += 1
+            if i < len(args) and args[i] not in _COMMANDS:
+                token = args[i]
+                i += 1
+                if token not in export.FORMATS:
+                    out.append(f"error: invalid format {token!r}")
+                    continue
+                fmt = token
+            out.extend(export.render(store.list(), fmt))
         elif cmd == "clear":
             out.append(f"cleared {store.clear_done()}")
             i += 1

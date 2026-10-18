@@ -521,3 +521,57 @@ def test_list_leaves_following_command_keyword():
         "[ ] 2: b",
         "open 1, done 1",
     ]
+
+
+def test_export_defaults_to_markdown():
+    assert run(["add", "milk", "add", "spec", "done", "1", "export"]) == [
+        "added 1: milk",
+        "added 2: spec",
+        "done 1",
+        "- [x] 1: milk",
+        "- [ ] 2: spec",
+    ]
+
+
+def test_export_explicit_markdown():
+    assert run(["add", "milk", "export", "md"]) == [
+        "added 1: milk",
+        "- [ ] 1: milk",
+    ]
+
+
+def test_export_csv():
+    assert run(["add", "milk", "export", "csv"]) == [
+        "added 1: milk",
+        "id,title,done,recurrence,due,priority",
+        "1,milk,false,,,medium",
+    ]
+
+
+def test_export_invalid_format_continues_chain():
+    assert run(["add", "milk", "export", "json", "count"]) == [
+        "added 1: milk",
+        "error: invalid format 'json'",
+        "open 1, done 0",
+    ]
+
+
+def test_export_does_not_swallow_following_command():
+    assert run(["add", "milk", "export", "count"]) == [
+        "added 1: milk",
+        "- [ ] 1: milk",
+        "open 1, done 0",
+    ]
+
+
+def test_export_is_not_taken_as_due_date():
+    # ``export`` is a command keyword, so ``due`` reports a missing date and leaves it as a command.
+    assert run(["add", "milk", "due", "export", "count"]) == [
+        "error: invalid due date ''",
+        "open 0, done 0",
+    ]
+
+
+def test_export_on_empty_store():
+    assert run(["export"]) == []
+    assert run(["export", "csv"]) == ["id,title,done,recurrence,due,priority"]
