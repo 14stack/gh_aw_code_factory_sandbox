@@ -99,8 +99,30 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
             i += 2
+        elif cmd == "prio" and i + 1 < len(args):
+            todo_id = int(args[i + 1])
+            level = args[i + 2] if i + 2 < len(args) else ""
+            i += 3
+            priority = _parse_priority(level)
+            if priority is None:
+                out.append(f"error: invalid priority {level!r}")
+                continue
+            try:
+                store.set_priority(todo_id, priority)
+                out.append(f"prio {todo_id}: {priority}")
+            except TodoNotFoundError:
+                out.append(f"error: no todo {todo_id}")
         elif cmd == "list":
-            for todo in store.list():
+            priority: str | None = None
+            i += 1
+            if i < len(args) and args[i] not in _COMMANDS:
+                token = args[i]
+                i += 1
+                priority = _parse_priority(token)
+                if priority is None:
+                    out.append(f"error: invalid priority {token!r}")
+                    continue
+            for todo in store.list(priority=priority):
                 mark = "x" if todo.done else " "
                 marker = "! " if todo.priority == "high" else "↓ " if todo.priority == "low" else ""
                 line = f"{marker}[{mark}] {todo.id}: {todo.title}"
@@ -113,7 +135,6 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     overdue = ", OVERDUE" if todo.due < date.today() else ""
                     line += f" (due {todo.due.isoformat()}{overdue})"
                 out.append(line)
-            i += 1
         elif cmd == "count":
             open_count, done_count = store.counts()
             out.append(f"open {open_count}, done {done_count}")
