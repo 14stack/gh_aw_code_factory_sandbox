@@ -29,7 +29,7 @@ engine:
     COPILOT_PROVIDER_TYPE: openai
     COPILOT_PROVIDER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     # Code-writing agents can use a stronger model (FACTORY_MODEL_CODE) than the planning/review agents.
-    COPILOT_MODEL: ${{ vars.FACTORY_MODEL_CODE || vars.FACTORY_MODEL || 'z-ai/glm-5.3-flash' }}
+    COPILOT_MODEL: ${{ vars.FACTORY_MODEL_CODE || vars.FACTORY_MODEL || 'deepseek/deepseek-v4.1-flash-1017' }}
 sandbox:
   agent:
     model-fallback: false  # pass the OpenRouter model slug through verbatim
