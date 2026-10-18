@@ -235,8 +235,8 @@ and formatting.
 ## Output
 
 - For each defect, call `create_pull_request_review_comment` on the exact file and line, with `pull_request_number`
-  from `pr_number.txt`, saying what is wrong and what to do instead.
-- Then call `submit_pull_request_review` once, with `event: COMMENT`, the same `pull_request_number`, and a body
+  from `pr_number.txt` and `repo: "${{ github.repository }}"`, saying what is wrong and what to do instead.
+- Then call `submit_pull_request_review` once, with `event: COMMENT`, the same `pull_request_number` and `repo`, and a body
   whose first line is `**Verdict:** approved` or `**Verdict:** changes requested`, followed by a short summary
   (for changes: a numbered list of what must change).
 - Finally call `report_review` once with `outcome` `approved` or `changes_requested` and a one-sentence summary.
