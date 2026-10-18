@@ -84,6 +84,20 @@ def test_load_rejects_corrupt_json(tmp_path):
         load(path)
 
 
+def test_load_rejects_invalid_utf8(tmp_path):
+    path = tmp_path / "todos.json"
+    path.write_bytes(b'{"version": 1, "next_id": 1, "todos": [{"id": 1, "title": "caf\xe9"}]}')
+    with pytest.raises(StorageError):
+        load(path)
+
+
+def test_save_wraps_parent_directory_errors(tmp_path):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("not a directory", encoding="utf-8")
+    with pytest.raises(StorageError):
+        save(blocker / "todos.json", [Todo(id=1, title="a")], next_id=2)
+
+
 @pytest.mark.parametrize(
     "document",
     [

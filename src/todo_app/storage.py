@@ -30,8 +30,9 @@ def load(path: Path) -> tuple[dict[int, Todo], int]:
         text = path.read_text(encoding="utf-8")
     except FileNotFoundError:
         return {}, 1
-    except OSError as exc:
-        raise StorageError(f"cannot read file: {exc.strerror or exc}") from None
+    except (OSError, UnicodeDecodeError) as exc:
+        reason = getattr(exc, "strerror", None) or exc
+        raise StorageError(f"cannot read file: {reason}") from None
 
     try:
         document = json.loads(text)
@@ -76,15 +77,18 @@ def save(path: Path, todos: Iterable[Todo], next_id: int) -> None:
             for todo in todos
         ],
     }
-    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(path.name + ".tmp")
     try:
+        path.parent.mkdir(parents=True, exist_ok=True)
         with tmp.open("w", encoding="utf-8") as handle:
             json.dump(document, handle, indent=2)
             handle.write("\n")
         os.replace(tmp, path)
     except OSError as exc:
-        tmp.unlink(missing_ok=True)
+        try:
+            tmp.unlink(missing_ok=True)
+        except OSError:
+            pass
         raise StorageError(f"cannot write file: {exc.strerror or exc}") from None
 
 
