@@ -57,10 +57,11 @@ steps:
       cat /tmp/gh-aw/agent/story-title.txt
 jobs:
   # Hands control back to the orchestrator (SPEC D29), whatever happened above: it reads the issue's new state and
-  # starts the next agent, retries this one, or asks a human. `finished_run` tells it this run is ending.
+  # starts the next agent, retries this one, or asks a human. `finished_run` tells it this run is ending. With the
+  # factory switched off it starts an orchestrator run that is skipped as well.
   wake_orchestrator:
     needs: [activation, agent, detection, safe_outputs, apply_refinement]
-    if: ${{ !cancelled() && needs.activation.result == 'success' }}
+    if: ${{ !cancelled() }}  # even when an earlier job failed (activation included): the orchestrator retries
     runs-on: ubuntu-latest
     permissions:
       actions: write
