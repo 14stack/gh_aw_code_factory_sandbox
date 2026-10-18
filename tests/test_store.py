@@ -372,3 +372,37 @@ def test_next_id_is_read_only():
     store = TodoStore()
     with pytest.raises(AttributeError):
         store.next_id = 5
+
+
+def test_set_due_sets_and_clears():
+    store = TodoStore()
+    store.add("spec")
+    assert store.set_due(1, date(2026, 11, 1)).due == date(2026, 11, 1)
+    assert store.set_due(1, None).due is None
+
+
+def test_set_due_keeps_recurrence():
+    store = TodoStore()
+    store.add("water plants", recurrence="3d")
+    todo = store.set_due(1, date(2026, 11, 1))
+    assert todo.recurrence == "3d"
+    assert store.set_due(1, None).recurrence == "3d"
+
+
+def test_set_due_unknown_id_raises():
+    store = TodoStore()
+    with pytest.raises(TodoNotFoundError):
+        store.set_due(1, date(2026, 11, 1))
+
+
+def test_store_with_path_persists_set_due(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("spec")
+    store.set_due(1, date(2026, 11, 1))
+
+    reloaded = TodoStore(path)
+    assert reloaded.get(1).due == date(2026, 11, 1)
+
+    reloaded.set_due(1, None)
+    assert TodoStore(path).get(1).due is None

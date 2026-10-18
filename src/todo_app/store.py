@@ -91,6 +91,12 @@ class TodoStore:
         self._save()
         return todo
 
+    def set_due(self, todo_id: int, due: date | None) -> Todo:
+        todo = self.get(todo_id)
+        todo.due = due
+        self._save()
+        return todo
+
     def remove(self, todo_id: int) -> None:
         self.get(todo_id)
         del self._todos[todo_id]
