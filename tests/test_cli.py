@@ -1,3 +1,4 @@
+import json
 import sys
 from datetime import date, timedelta
 
@@ -250,6 +251,37 @@ def test_cli_reports_unreadable_file(tmp_path, monkeypatch, capsys):
     assert captured.out == ""
     assert f"error: cannot read {path}:" in captured.err
     assert path.read_text(encoding="utf-8") == corrupt
+
+
+def test_cli_reports_invalid_priority_in_file(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "todos.json"
+    document = json.dumps(
+        {
+            "version": 1,
+            "next_id": 2,
+            "todos": [
+                {
+                    "id": 1,
+                    "title": "pay rent",
+                    "done": False,
+                    "recurrence": None,
+                    "due": None,
+                    "priority": "urgent",
+                }
+            ],
+        }
+    )
+    path.write_text(document, encoding="utf-8")
+    monkeypatch.setenv("TODO_FILE", str(path))
+    monkeypatch.setattr(sys, "argv", ["todo", "list"])
+
+    assert main() == 1
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert f"error: cannot read {path}:" in captured.err
+    assert "todo 1: invalid priority 'urgent'" in captured.err
+    assert path.read_text(encoding="utf-8") == document
 
 
 def test_add_with_priority_and_list_marks_high_and_low():

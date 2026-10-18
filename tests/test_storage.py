@@ -164,6 +164,21 @@ def test_save_wraps_parent_directory_errors(tmp_path):
             "next_id": 1,
             "todos": [{"id": 1, "title": "a", "done": False, "due": 20260131}],
         },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [{"id": 1, "title": "a", "done": False, "priority": "urgent"}],
+        },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [{"id": 1, "title": "a", "done": False, "priority": None}],
+        },
+        {
+            "version": 1,
+            "next_id": 1,
+            "todos": [{"id": 1, "title": "a", "done": False, "priority": 1}],
+        },
     ],
 )
 def test_load_rejects_invalid_documents(tmp_path, document):
