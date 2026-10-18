@@ -118,7 +118,13 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
             i += 2
-        elif cmd == "prio" and i + 1 < len(args):
+        elif cmd == "prio":
+            # A following command keyword is not an id, so it stays a command.
+            has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+            if not has_token:
+                out.append("error: missing id")
+                i += 1
+                continue
             todo_id = int(args[i + 1])
             level = args[i + 2] if i + 2 < len(args) else ""
             i += 3

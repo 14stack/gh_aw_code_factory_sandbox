@@ -324,6 +324,15 @@ def test_prio_errors():
     ]
 
 
+def test_prio_missing_id_reports_error():
+    assert run(["prio"]) == ["error: missing id"]
+    assert run(["add", "milk", "prio", "list"]) == [
+        "added 1: milk",
+        "error: missing id",
+        "[ ] 1: milk",
+    ]
+
+
 def test_prio_works_on_completed_todos():
     assert run(["add", "x", "done", "1", "prio", "1", "high", "list"]) == [
         "added 1: x",
