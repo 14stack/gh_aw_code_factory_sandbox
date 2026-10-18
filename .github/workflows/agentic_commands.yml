@@ -42,7 +42,12 @@ permissions: {}
 
 jobs:
   route:
-    if: startsWith(github.event.label.name, 'factory:')
+    if: >-
+      github.event.label.name == 'factory:refinement_done' ||
+      github.event.label.name == 'factory:refinement_requires_ai_review' ||
+      github.event.label.name == 'factory:sub_issue_implementation_ready' ||
+      github.event.label.name == 'factory:sub_issue_pr_requires_fix' ||
+      github.event.label.name == 'factory:sub_issue_pr_requires_review'
     runs-on: ubuntu-slim
     timeout-minutes: 15
     permissions:
