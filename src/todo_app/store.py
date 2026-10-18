@@ -39,6 +39,11 @@ class TodoStore:
         else:
             self._todos, self._next_id = storage.load(path)
 
+    @property
+    def next_id(self) -> int:
+        """Return the id the next ``add`` will use."""
+        return self._next_id
+
     def _save(self) -> None:
         if self._path is None:
             return
