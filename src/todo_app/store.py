@@ -50,6 +50,12 @@ class TodoStore:
         self.get(todo_id)
         del self._todos[todo_id]
 
+    def counts(self) -> tuple[int, int]:
+        """Return the number of open and done todos as ``(open, done)``."""
+        open_count = sum(1 for todo in self._todos.values() if not todo.done)
+        done_count = sum(1 for todo in self._todos.values() if todo.done)
+        return open_count, done_count
+
     def list(self, *, include_done: bool = True) -> list[Todo]:
         todos = sorted(self._todos.values(), key=lambda t: (t.due is None, t.due or date.min, t.id))
         if include_done:
