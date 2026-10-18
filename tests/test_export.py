@@ -85,11 +85,11 @@ def test_json_renders_one_line_document():
     assert render(todos, "json", next_id=4) == [
         '{"version": 1, "next_id": 4, "todos": ['
         '{"id": 1, "title": "milk", "done": false, "recurrence": null, '
-        '"due": "2026-01-31", "priority": "medium"}, '
+        '"due": "2026-01-31", "priority": "medium", "tags": []}, '
         '{"id": 2, "title": "water plants", "done": true, "recurrence": "3d", '
-        '"due": null, "priority": "high"}, '
+        '"due": null, "priority": "high", "tags": []}, '
         '{"id": 3, "title": "weekly review", "done": false, "recurrence": "weekly", '
-        '"due": null, "priority": "low"}]}'
+        '"due": null, "priority": "low", "tags": []}]}'
     ]
 
 
@@ -109,3 +109,25 @@ def test_json_round_trips_through_storage_load(tmp_path):
     todos, next_id = storage.load(path)
     assert next_id == store.next_id
     assert todos == {todo.id: todo for todo in store.list()}
+
+
+def test_markdown_unchanged_with_tagged_todos():
+    todos = [Todo(id=1, title="milk", due=date(2026, 1, 31), tags=("home", "shopping"))]
+    assert render(todos, "md") == ["- [ ] 1: milk (due 2026-01-31)"]
+
+
+def test_csv_unchanged_with_tagged_todos():
+    todos = [Todo(id=1, title="milk", tags=("home", "shopping"))]
+    assert render(todos, "csv") == [
+        "id,title,done,recurrence,due,priority",
+        "1,milk,false,,,medium",
+    ]
+
+
+def test_json_includes_tags():
+    todos = [Todo(id=1, title="milk", tags=("home", "shopping"))]
+    assert render(todos, "json", next_id=2) == [
+        '{"version": 1, "next_id": 2, "todos": ['
+        '{"id": 1, "title": "milk", "done": false, "recurrence": null, '
+        '"due": null, "priority": "medium", "tags": ["home", "shopping"]}]}'
+    ]
