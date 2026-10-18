@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from datetime import date
 from pathlib import Path
 
-from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, Todo, normalize_tags
+from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, Todo
 
 VERSION = 1
 _TODO_FIELDS = ("id", "title", "done", "recurrence", "due")
@@ -74,7 +74,6 @@ def document(todos: Iterable[Todo], next_id: int) -> dict[str, object]:
                 "recurrence": todo.recurrence,
                 "due": todo.due.isoformat() if todo.due is not None else None,
                 "priority": todo.priority,
-                "tags": list(todo.tags),
             }
             for todo in todos
         ],
@@ -138,14 +137,6 @@ def _parse_todo(raw: object) -> Todo:
     if priority not in PRIORITIES:
         raise StorageError(f"todo {todo_id}: invalid priority {priority!r}")
 
-    raw_tags = raw.get("tags", [])
-    if not isinstance(raw_tags, list) or not all(isinstance(tag, str) for tag in raw_tags):
-        raise StorageError(f"todo {todo_id}: tags must be a list of strings")
-    try:
-        tags = normalize_tags(raw_tags)
-    except ValueError:
-        raise StorageError(f"todo {todo_id}: invalid tags {raw_tags!r}") from None
-
     return Todo(
         id=todo_id,
         title=title,
@@ -153,5 +144,4 @@ def _parse_todo(raw: object) -> Todo:
         recurrence=recurrence,
         due=due,
         priority=priority,
-        tags=tags,
     )

@@ -56,7 +56,6 @@ def test_save_writes_versioned_document(tmp_path):
                 "recurrence": None,
                 "due": "2026-01-31",
                 "priority": "medium",
-                "tags": [],
             }
         ],
     }
@@ -291,7 +290,6 @@ def test_document_shape_for_mixed_todos():
                 "recurrence": None,
                 "due": "2026-01-31",
                 "priority": "medium",
-                "tags": [],
             },
             {
                 "id": 2,
@@ -300,7 +298,6 @@ def test_document_shape_for_mixed_todos():
                 "recurrence": "3d",
                 "due": None,
                 "priority": "high",
-                "tags": [],
             },
             {
                 "id": 3,
@@ -309,7 +306,6 @@ def test_document_shape_for_mixed_todos():
                 "recurrence": "weekly",
                 "due": None,
                 "priority": "low",
-                "tags": [],
             },
         ],
     }
@@ -329,67 +325,3 @@ def test_save_writes_exactly_the_document(tmp_path):
     save(path, todos, next_id=3)
 
     assert json.loads(path.read_text(encoding="utf-8")) == document(todos, next_id=3)
-
-
-def test_save_and_load_round_trip_tags(tmp_path):
-    path = tmp_path / "todos.json"
-    todos = [Todo(id=1, title="milk", tags=("home", "shopping"))]
-    save(path, todos, next_id=2)
-
-    loaded, _ = load(path)
-    assert loaded[1].tags == ("home", "shopping")
-
-
-def test_load_defaults_missing_tags_to_empty(tmp_path):
-    path = tmp_path / "todos.json"
-    path.write_text(
-        json.dumps(
-            {
-                "version": 1,
-                "next_id": 2,
-                "todos": [{"id": 1, "title": "a", "done": False, "recurrence": None, "due": None}],
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    loaded, _ = load(path)
-    assert loaded[1].tags == ()
-
-    save(path, loaded.values(), next_id=2)
-    document = json.loads(path.read_text(encoding="utf-8"))
-    assert document["todos"][0]["tags"] == []
-
-
-def test_save_writes_tags(tmp_path):
-    path = tmp_path / "todos.json"
-    save(path, [Todo(id=1, title="milk", tags=("home", "shopping"))], next_id=2)
-
-    document = json.loads(path.read_text(encoding="utf-8"))
-    assert document["todos"][0]["tags"] == ["home", "shopping"]
-
-
-@pytest.mark.parametrize("tags", ["home", [1], ["Home"], [None]])
-def test_load_rejects_invalid_tags(tmp_path, tags):
-    path = tmp_path / "todos.json"
-    path.write_text(
-        json.dumps(
-            {
-                "version": 1,
-                "next_id": 2,
-                "todos": [
-                    {
-                        "id": 1,
-                        "title": "a",
-                        "done": False,
-                        "recurrence": None,
-                        "due": None,
-                        "tags": tags,
-                    }
-                ],
-            }
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(StorageError, match=r"todo 1: (invalid tags|tags must be)"):
-        load(path)

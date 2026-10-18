@@ -640,7 +640,7 @@ def test_export_json():
         "added 1: milk",
         '{"version": 1, "next_id": 2, "todos": ['
         '{"id": 1, "title": "milk", "done": false, "recurrence": null, '
-        '"due": null, "priority": "medium", "tags": []}]}',
+        '"due": null, "priority": "medium"}]}',
     ]
 
 
@@ -650,7 +650,7 @@ def test_export_json_in_a_command_chain():
         "done 1",
         '{"version": 1, "next_id": 2, "todos": ['
         '{"id": 1, "title": "milk", "done": true, "recurrence": null, '
-        '"due": null, "priority": "medium", "tags": []}]}',
+        '"due": null, "priority": "medium"}]}',
         "open 0, done 1",
     ]
 
