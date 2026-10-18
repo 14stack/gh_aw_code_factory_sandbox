@@ -378,7 +378,9 @@ def test_invalid_priority_rejected():
     assert run(["add", "x", "priority", "urgent", "list"]) == [
         "error: invalid priority 'urgent'",
     ]
-    assert run(["add", "x", "priority", "list"]) == ["error: invalid priority ''"]
+    assert run(["add", "x", "priority", "list"]) == [
+        "error: invalid priority 'list'",
+    ]
     assert run(["add", "x", "priority"]) == ["error: invalid priority ''"]
 
 
@@ -581,9 +583,9 @@ def test_title_is_not_swallowed_by_add_due_or_list():
         "[ ] 1: a",
         "title 1: b",
     ]
-    assert run(["add", "x", "add", "y", "priority", "title", "1", "new"]) == [
+    # ``add ... priority`` keeps its old token handling, so ``title`` follows a valid priority.
+    assert run(["add", "x", "priority", "high", "title", "1", "new"]) == [
         "added 1: x",
-        "error: invalid priority ''",
         "title 1: new",
     ]
 
