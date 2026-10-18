@@ -28,7 +28,7 @@ engine:
     COPILOT_PROVIDER_BASE_URL: "https://openrouter.ai/api/v1"
     COPILOT_PROVIDER_TYPE: openai
     COPILOT_PROVIDER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-    COPILOT_MODEL: ${{ vars.FACTORY_MODEL || 'z-ai/glm-5.3-flash' }}
+    COPILOT_MODEL: ${{ vars.FACTORY_MODEL || 'deepseek/deepseek-v4.1-flash-1017' }}
 sandbox:
   agent:
     model-fallback: false  # pass the OpenRouter model slug through verbatim
