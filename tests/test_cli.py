@@ -548,10 +548,30 @@ def test_export_csv():
     ]
 
 
-def test_export_invalid_format_continues_chain():
-    assert run(["add", "milk", "export", "json", "count"]) == [
+def test_export_json():
+    assert run(["add", "milk", "export", "json"]) == [
         "added 1: milk",
-        "error: invalid format 'json'",
+        '{"version": 1, "next_id": 2, "todos": ['
+        '{"id": 1, "title": "milk", "done": false, "recurrence": null, '
+        '"due": null, "priority": "medium"}]}',
+    ]
+
+
+def test_export_json_in_a_command_chain():
+    assert run(["add", "milk", "done", "1", "export", "json", "count"]) == [
+        "added 1: milk",
+        "done 1",
+        '{"version": 1, "next_id": 2, "todos": ['
+        '{"id": 1, "title": "milk", "done": true, "recurrence": null, '
+        '"due": null, "priority": "medium"}]}',
+        "open 0, done 1",
+    ]
+
+
+def test_export_invalid_format_continues_chain():
+    assert run(["add", "milk", "export", "xml", "count"]) == [
+        "added 1: milk",
+        "error: invalid format 'xml'",
         "open 1, done 0",
     ]
 
@@ -575,3 +595,4 @@ def test_export_is_not_taken_as_due_date():
 def test_export_on_empty_store():
     assert run(["export"]) == []
     assert run(["export", "csv"]) == ["id,title,done,recurrence,due,priority"]
+    assert run(["export", "json"]) == ['{"version": 1, "next_id": 1, "todos": []}']

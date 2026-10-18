@@ -179,7 +179,7 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     out.append(f"error: invalid format {token!r}")
                     continue
                 fmt = token
-            out.extend(export.render(store.list(), fmt))
+            out.extend(export.render(store.list(), fmt, next_id=store.next_id))
         elif cmd == "clear":
             out.append(f"cleared {store.clear_done()}")
             i += 1

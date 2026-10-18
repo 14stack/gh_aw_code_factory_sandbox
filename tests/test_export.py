@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from todo_app import storage
 from todo_app.export import render
 from todo_app.store import Todo, TodoStore
 
@@ -72,4 +73,39 @@ def test_render_follows_store_list_order():
 
 def test_unknown_format_raises():
     with pytest.raises(ValueError):
-        render([], "json")
+        render([], "xml")
+
+
+def test_json_renders_one_line_document():
+    todos = [
+        Todo(id=1, title="milk", due=date(2026, 1, 31)),
+        Todo(id=2, title="water plants", done=True, recurrence="3d", priority="high"),
+        Todo(id=3, title="weekly review", recurrence="weekly", priority="low"),
+    ]
+    assert render(todos, "json", next_id=4) == [
+        '{"version": 1, "next_id": 4, "todos": ['
+        '{"id": 1, "title": "milk", "done": false, "recurrence": null, '
+        '"due": "2026-01-31", "priority": "medium"}, '
+        '{"id": 2, "title": "water plants", "done": true, "recurrence": "3d", '
+        '"due": null, "priority": "high"}, '
+        '{"id": 3, "title": "weekly review", "done": false, "recurrence": "weekly", '
+        '"due": null, "priority": "low"}]}'
+    ]
+
+
+def test_json_empty_store_renders_empty_todos():
+    assert render([], "json", next_id=1) == ['{"version": 1, "next_id": 1, "todos": []}']
+
+
+def test_json_round_trips_through_storage_load(tmp_path):
+    store = TodoStore()
+    store.add("milk", due=date(2026, 1, 31))
+    store.add("water plants", recurrence="3d", priority="high")
+    store.complete(2)
+
+    path = tmp_path / "todos.json"
+    path.write_text(render(store.list(), "json", next_id=store.next_id)[0], encoding="utf-8")
+
+    todos, next_id = storage.load(path)
+    assert next_id == store.next_id
+    assert todos == {todo.id: todo for todo in store.list()}
