@@ -97,19 +97,19 @@ safe-outputs:
           required: true
           type: string
         goal:
-          description: "One or two sentences: what this sub-issue achieves"
+          description: "One plain sentence for the human: what this sub-issue changes"
           required: true
           type: string
-        acceptance_criteria:
-          description: "Markdown checklist (- [ ] ...), each item traced to a BR id, e.g. '- [ ] (BR-1) ...'"
+        done_when:
+          description: "Markdown checklist (- [ ] ...), one testable item per line, traced to the story's R ids: '- [ ] (R1) ...'"
           required: true
           type: string
-        technical_notes:
-          description: "Files and functions to touch, the approach and pitfalls"
+        notes:
+          description: "Only what the story spec and the code don't already say (files, approach, pitfalls), or 'none'"
           required: true
           type: string
-        qa:
-          description: "The concrete tests this sub-issue adds or extends (file and test names)"
+        tests:
+          description: "The tests to add or extend: '- `tests/test_x.py`: behaviours'"
           required: true
           type: string
         depends_on:
@@ -167,30 +167,32 @@ safe-outputs:
 # AI issue splitter
 
 You are the **splitter** of the code factory. Story issue #${{ inputs.issue }} in
-${{ github.repository }} is refined. Split it into small sub-issues that developers (AI agents) implement one at a
-time, each as one pull request into the story branch.
+${{ github.repository }} is refined. Split it into small sub-issues that AI developers implement one at a time, each
+as one pull request into the story branch.
+
+Agents read the sub-issues, the human reads only the titles and goals. Write only what an implementer needs and
+can't get from the story spec or the code: no repetition across fields, no restating the story.
 
 ## Inputs
 
-- `/tmp/gh-aw/agent/story-title.txt` and `/tmp/gh-aw/agent/story.md`: the refined story (Background, Business
-  requirements `BR-n`, Technical details, QA).
+- `/tmp/gh-aw/agent/story-title.txt` and `/tmp/gh-aw/agent/story.md`: the refined story (Summary, Spec with
+  requirements `R<n>`, Decisions).
 - The repository is checked out in the current directory. Read `AGENTS.md` first, then the code the story touches.
 
 ## How to split
 
-1. Every sub-issue is **one small pull request** (about 1–3 files, tests included) that leaves the code green: lint,
-   format and tests pass after it is merged on its own.
-2. Together, the sub-issues cover **every** business requirement and the QA section. Each acceptance criterion names
-   the BR it implements, e.g. `- [ ] (BR-2) list sorts todos by due date`.
-3. Each sub-issue adds or extends its own tests (`qa`). Don't plan a separate "write tests" sub-issue.
-4. Dependencies: `depends_on` lists the sub-issues that must be merged first. Prefer a simple chain (S2 depends on
-   S1, S3 on S2, ...). Only leave sub-issues independent when they touch different files.
-5. Use as few sub-issues as make sense: usually 2–6, never more than 20. A very small story may be one sub-issue.
+1. Every sub-issue is **one small pull request** (about 1–3 files, tests included) that leaves the code green on its
+   own.
+2. Together the sub-issues cover every requirement; each `done_when` item names its requirement: `- [ ] (R2) ...`.
+3. Each sub-issue brings its own tests. No separate "write tests" sub-issue.
+4. `depends_on`: the sub-issues that must be merged first. Prefer a simple chain (S2 after S1, S3 after S2, ...);
+   leave sub-issues independent only when they touch different files.
+5. As few sub-issues as make sense: usually 1–4, never more than 20.
+6. Budget per sub-issue: `done_when` 2–6 items, `notes` 0–5 bullets, `tests` 1–4 lines.
 
 ## What to do
 
-- Call `create_sub_issue` once per sub-issue, in order (S1, S2, ...). Write the fields in Markdown and be concrete:
-  name files, functions and test cases from this repository.
+- Call `create_sub_issue` once per sub-issue, in order (S1, S2, ...).
 - If the story genuinely cannot be done in 20 sub-issues, call `split_too_large` once instead, with the reason and a
   suggested split into smaller stories. Don't call both.
 - Don't comment on the issue, change labels or edit files. Branches, issues, links and the story PR are created

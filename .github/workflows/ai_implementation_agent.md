@@ -176,7 +176,7 @@ safe-outputs:
           type: choice
           options: ["pr_opened", "blocked"]
         summary:
-          description: "One sentence: what you implemented and how you verified it, or why you are blocked"
+          description: "At most 15 words: what you implemented, or why you are blocked"
           required: true
           type: string
       steps:
@@ -220,8 +220,8 @@ ${{ github.repository }} and open one pull request into its story branch.
 
 ## Inputs
 
-- `/tmp/gh-aw/agent/sub-issue.md`: the sub-issue: Goal, Acceptance criteria, Technical notes, QA / tests to add.
-- `/tmp/gh-aw/agent/story.md`: the parent story, for context (Business requirements, Technical details, QA).
+- `/tmp/gh-aw/agent/sub-issue.md`: the sub-issue: its goal, then the Spec with "Done when", "Notes" and "Tests".
+- `/tmp/gh-aw/agent/story.md`: the parent story, for context (Summary, Spec with requirements `R<n>`, Decisions).
 - `/tmp/gh-aw/agent/branches.txt`: `story_branch` (the PR base, already checked out) and `sub_branch` (your branch).
 - `AGENTS.md` in the repository: layout, commands (install, lint, format, test) and conventions. Follow it.
   The project's dependencies are already installed; you have no internet access for package installs.
@@ -230,18 +230,18 @@ ${{ github.repository }} and open one pull request into its story branch.
 
 1. Read the inputs and `AGENTS.md`, then the code you will change.
 2. Create your branch: `git checkout -b <sub_branch>`.
-3. Implement **only** this sub-issue: every acceptance criterion, nothing else. Keep the change small and in the
+3. Implement **only** this sub-issue: every "Done when" item, nothing else. Keep the change small and in the
    style of the surrounding code. Never edit `.github/`.
-4. Add the tests listed under "QA / tests to add" (and any others the change needs).
+4. Add the tests listed under "Tests" (and any others the change needs).
 5. Run the lint, format and test commands from `AGENTS.md`. Fix and re-run until all pass. Use the formatter to
    fix formatting (for example `ruff format .`).
 6. Commit with a clear message (`git add -A && git commit -m "..."`).
 7. Call `create_pull_request` with:
    - `branch`: the `sub_branch`; `base`: the `story_branch` (both from `branches.txt`);
    - `title`: the sub-issue title;
-   - `body`: a short summary, then the line `Part of #${{ inputs.issue }}`, the acceptance criteria as
-     a checked list, and the test commands you ran with their results.
-8. Call `report_implementation` with `outcome: pr_opened` and a one-sentence summary.
+   - `body`: one or two sentences on what changed, then the line `Part of #${{ inputs.issue }}`. Nothing else: the
+     reviewer reads the diff and CI shows the checks.
+8. Call `report_implementation` with `outcome: pr_opened` and a summary of at most 15 words.
 
 If you cannot make the checks pass, or the sub-issue is ambiguous or contradicts the code, don't open a PR: call
 `report_implementation` with `outcome: blocked` and explain why in the summary. Don't comment on issues or change
