@@ -39,6 +39,28 @@ matching.
 todo find milk
 ```
 
+## Filtering todos
+
+`todo list` accepts an optional status filter, and an optional priority filter from `high`, `medium` or `low`:
+
+- `open` prints only open todos.
+- `done` prints only done todos.
+- `overdue` prints only open todos whose due date is before today.
+
+A status word and a priority word can be combined in either order, so `todo list open high` and `todo list high open`
+print the same lines. Each filtered list keeps the same format and order as plain `list`. Because `done` is also a
+command keyword, `list done` now means the done filter. To mark a todo done and then list, put `list` after it, as in
+`todo done 1 list`.
+
+An unknown filter word, or a second status or priority word, prints `error: invalid filter '<word>'` and consumes that
+word. The rest of the command chain still runs.
+
+```bash
+todo list open high
+todo list high open
+todo list bogus done 1 list
+```
+
 ## Exporting todos
 
 `todo export [md|csv|json]` prints every todo, open and done, in `list` order. Nothing is written to disk, so
