@@ -9,7 +9,14 @@ from datetime import date, timedelta
 
 from todo_app import export
 from todo_app.storage import StorageError, default_path
-from todo_app.store import DEFAULT_PRIORITY, PRIORITIES, Todo, TodoNotFoundError, TodoStore
+from todo_app.store import (
+    DEFAULT_PRIORITY,
+    PRIORITIES,
+    STATUSES,
+    Todo,
+    TodoNotFoundError,
+    TodoStore,
+)
 
 _COMMANDS = frozenset(
     {"add", "done", "rm", "list", "find", "clear", "count", "prio", "due", "export"}
@@ -206,16 +213,24 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             except TodoNotFoundError:
                 out.append(f"error: no todo {todo_id}")
         elif cmd == "list":
+            # ``done`` directly after ``list`` is a status filter, not the command.
+            status: str | None = None
             priority: str | None = None
+            errors: list[str] = []
             i += 1
-            if i < len(args) and args[i] not in _COMMANDS:
+            while i < len(args) and (args[i] not in _COMMANDS or args[i] == "done"):
                 token = args[i]
                 i += 1
-                priority = _parse_priority(token)
-                if priority is None:
-                    out.append(f"error: invalid priority {token!r}")
-                    continue
-            for todo in store.list(priority=priority):
+                if token in STATUSES and status is None:
+                    status = token
+                elif _parse_priority(token) is not None and priority is None:
+                    priority = token
+                else:
+                    errors.append(f"error: invalid filter {token!r}")
+            if errors:
+                out.extend(errors)
+                continue
+            for todo in store.list(priority=priority, status=status):
                 out.append(_format_todo(todo))
         elif cmd == "find":
             # A following command keyword is not the search text, so it stays a command.

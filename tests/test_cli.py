@@ -505,10 +505,97 @@ def test_list_filters_by_priority():
     ]
 
 
-def test_list_invalid_priority_rejected():
+def test_list_invalid_filter_rejected():
     assert run(["add", "x", "list", "urgent"]) == [
         "added 1: x",
-        "error: invalid priority 'urgent'",
+        "error: invalid filter 'urgent'",
+    ]
+
+
+def test_list_filters_by_status():
+    past = date.today() - timedelta(days=1)
+    setup = ["add", "open one", "add", "done one", "done", "2", "add", "late", "due", str(past)]
+    assert run([*setup, "list", "open"]) == [
+        "added 1: open one",
+        "added 2: done one",
+        "done 2",
+        "added 3: late",
+        f"[ ] 3: late (due {past.isoformat()}, OVERDUE)",
+        "[ ] 1: open one",
+    ]
+    assert run([*setup, "list", "done"]) == [
+        "added 1: open one",
+        "added 2: done one",
+        "done 2",
+        "added 3: late",
+        "[x] 2: done one",
+    ]
+    assert run([*setup, "list", "overdue"]) == [
+        "added 1: open one",
+        "added 2: done one",
+        "done 2",
+        "added 3: late",
+        f"[ ] 3: late (due {past.isoformat()}, OVERDUE)",
+    ]
+
+
+def test_list_combines_status_and_priority_in_either_order():
+    setup = [
+        "add",
+        "a",
+        "priority",
+        "high",
+        "add",
+        "b",
+        "priority",
+        "high",
+        "done",
+        "2",
+        "add",
+        "c",
+    ]
+    expected = [
+        "added 1: a",
+        "added 2: b",
+        "done 2",
+        "added 3: c",
+        "! [ ] 1: a",
+    ]
+    assert run([*setup, "list", "open", "high"]) == expected
+    assert run([*setup, "list", "high", "open"]) == expected
+
+
+def test_list_invalid_filter_continues_chain():
+    assert run(["add", "a", "list", "bogus", "count"]) == [
+        "added 1: a",
+        "error: invalid filter 'bogus'",
+        "open 1, done 0",
+    ]
+
+
+def test_list_repeated_status_or_priority_rejected():
+    setup = ["add", "a", "priority", "high", "add", "b", "priority", "low", "done", "2"]
+    assert run([*setup, "list", "open", "done", "count"]) == [
+        "added 1: a",
+        "added 2: b",
+        "done 2",
+        "error: invalid filter 'done'",
+        "open 1, done 1",
+    ]
+    assert run([*setup, "list", "high", "low", "count"]) == [
+        "added 1: a",
+        "added 2: b",
+        "done 2",
+        "error: invalid filter 'low'",
+        "open 1, done 1",
+    ]
+
+
+def test_list_done_with_number_reports_invalid_filter():
+    assert run(["add", "a", "done", "1", "list", "done", "1"]) == [
+        "added 1: a",
+        "done 1",
+        "error: invalid filter '1'",
     ]
 
 
