@@ -78,6 +78,15 @@ class TodoStore:
         self._save()
         return todo
 
+    def set_title(self, todo_id: int, title: str) -> Todo:
+        title = title.strip()
+        if not title:
+            raise ValueError("title must not be empty")
+        todo = self.get(todo_id)
+        todo.title = title
+        self._save()
+        return todo
+
     def set_priority(self, todo_id: int, priority: str) -> Todo:
         if priority not in PRIORITIES:
             raise ValueError(f"invalid priority {priority!r}")
