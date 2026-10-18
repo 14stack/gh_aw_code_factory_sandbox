@@ -153,3 +153,101 @@ def test_counts_after_complete_spawns_recurrence():
     store.add("water plants", recurrence="3d")
     store.complete(1)
     assert store.counts() == (1, 1)
+
+
+def test_store_with_path_persists_add(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("milk", due=date(2026, 1, 31))
+    store.add("water plants", recurrence="3d")
+
+    reloaded = TodoStore(path)
+    assert [t.id for t in reloaded.list()] == [1, 2]
+    assert reloaded.get(1).title == "milk"
+    assert reloaded.get(1).due == date(2026, 1, 31)
+    assert reloaded.get(1).done is False
+    assert reloaded.get(1).recurrence is None
+    assert reloaded.get(2).recurrence == "3d"
+    assert reloaded.get(2).due is None
+
+
+def test_store_with_path_persists_complete_and_spawn(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("water plants", recurrence="3d")
+    store.complete(1)
+
+    reloaded = TodoStore(path)
+    assert [(t.id, t.done) for t in reloaded.list()] == [(1, True), (2, False)]
+    assert reloaded.get(2).title == "water plants"
+    assert reloaded.get(2).recurrence == "3d"
+
+
+def test_store_with_path_persists_remove_and_next_id(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("a")
+    store.remove(1)
+
+    reloaded = TodoStore(path)
+    assert reloaded.list() == []
+    assert reloaded.add("b").id == 2
+
+
+def test_store_with_path_persists_clear_done(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("a")
+    store.add("b")
+    store.complete(1)
+    assert store.clear_done() == 1
+
+    reloaded = TodoStore(path)
+    assert [t.id for t in reloaded.list()] == [2]
+    assert reloaded.counts() == (1, 0)
+
+
+def test_store_with_path_counts_persisted_todos(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("a")
+    store.add("b")
+    store.complete(1)
+
+    assert TodoStore(path).counts() == (1, 1)
+
+
+def test_store_with_path_to_missing_file_starts_empty(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    assert store.list() == []
+    assert store.counts() == (0, 0)
+    assert not path.exists()
+
+    store.add("a")
+    assert path.exists()
+
+
+def test_store_without_path_stays_in_memory(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    store = TodoStore()
+    store.add("a")
+    store.complete(1)
+    store.remove(1)
+    store.clear_done()
+
+    assert TodoStore().list() == []
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_store_with_path_reads_do_not_write(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("a")
+    before = path.read_bytes()
+
+    store.get(1)
+    store.list()
+    store.counts()
+
+    assert path.read_bytes() == before

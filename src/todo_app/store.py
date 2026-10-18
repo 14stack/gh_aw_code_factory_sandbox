@@ -1,7 +1,10 @@
-"""In-memory todo store."""
+"""Todo store, in memory or persisted to a JSON file."""
 
 from dataclasses import dataclass
 from datetime import date
+from pathlib import Path
+
+from todo_app import storage
 
 
 class TodoNotFoundError(KeyError):
@@ -18,11 +21,24 @@ class Todo:
 
 
 class TodoStore:
-    """Keeps todos in memory, keyed by an auto-incrementing id."""
+    """Keeps todos keyed by an auto-incrementing id.
 
-    def __init__(self) -> None:
-        self._todos: dict[int, Todo] = {}
-        self._next_id = 1
+    With a ``path`` the store loads from that file and saves after every mutation;
+    without one it stays purely in memory.
+    """
+
+    def __init__(self, path: Path | None = None) -> None:
+        self._path = path
+        if path is None:
+            self._todos: dict[int, Todo] = {}
+            self._next_id = 1
+        else:
+            self._todos, self._next_id = storage.load(path)
+
+    def _save(self) -> None:
+        if self._path is None:
+            return
+        storage.save(self._path, self._todos.values(), self._next_id)
 
     def add(self, title: str, recurrence: str | None = None, due: date | None = None) -> Todo:
         title = title.strip()
@@ -31,6 +47,7 @@ class TodoStore:
         todo = Todo(id=self._next_id, title=title, recurrence=recurrence, due=due)
         self._todos[todo.id] = todo
         self._next_id += 1
+        self._save()
         return todo
 
     def get(self, todo_id: int) -> Todo:
@@ -44,16 +61,19 @@ class TodoStore:
         todo.done = True
         if todo.recurrence is not None:
             self.add(todo.title, recurrence=todo.recurrence)
+        self._save()
         return todo
 
     def remove(self, todo_id: int) -> None:
         self.get(todo_id)
         del self._todos[todo_id]
+        self._save()
 
     def clear_done(self) -> int:
         done_ids = [todo_id for todo_id, todo in self._todos.items() if todo.done]
         for todo_id in done_ids:
             del self._todos[todo_id]
+        self._save()
         return len(done_ids)
 
     def counts(self) -> tuple[int, int]:
