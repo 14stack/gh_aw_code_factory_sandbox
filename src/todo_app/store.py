@@ -1,6 +1,7 @@
 """In-memory todo store."""
 
 from dataclasses import dataclass
+from datetime import date
 
 
 class TodoNotFoundError(KeyError):
@@ -13,6 +14,7 @@ class Todo:
     title: str
     done: bool = False
     recurrence: str | None = None
+    due: date | None = None
 
 
 class TodoStore:
@@ -22,11 +24,11 @@ class TodoStore:
         self._todos: dict[int, Todo] = {}
         self._next_id = 1
 
-    def add(self, title: str, recurrence: str | None = None) -> Todo:
+    def add(self, title: str, recurrence: str | None = None, due: date | None = None) -> Todo:
         title = title.strip()
         if not title:
             raise ValueError("title must not be empty")
-        todo = Todo(id=self._next_id, title=title, recurrence=recurrence)
+        todo = Todo(id=self._next_id, title=title, recurrence=recurrence, due=due)
         self._todos[todo.id] = todo
         self._next_id += 1
         return todo
@@ -49,7 +51,7 @@ class TodoStore:
         del self._todos[todo_id]
 
     def list(self, *, include_done: bool = True) -> list[Todo]:
-        todos = sorted(self._todos.values(), key=lambda t: t.id)
+        todos = sorted(self._todos.values(), key=lambda t: (t.due is None, t.due or date.min, t.id))
         if include_done:
             return todos
         return [t for t in todos if not t.done]
