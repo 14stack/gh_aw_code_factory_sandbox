@@ -41,6 +41,17 @@ matching.
 todo find milk
 ```
 
+## Showing one todo
+
+`todo show <id>` prints a single todo, open or done, in the same format as a `list` line, including the priority
+marker, checkbox, id, title, recurrence and due/`OVERDUE` suffix. A missing id prints `error: missing id`, an invalid
+id prints `error: invalid id '<token>'` and an unknown id prints `error: no todo <id>`; in every case the rest of the
+command chain still runs.
+
+```bash
+todo show 1
+```
+
 ## Filtering todos
 
 `todo list` accepts an optional status filter, and an optional priority filter from `high`, `medium` or `low`:

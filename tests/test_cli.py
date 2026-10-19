@@ -1099,3 +1099,84 @@ def test_find_and_due_lines_include_tag_suffixes():
     store = TodoStore()
     assert run(["add", "milk", "tag", "home"], store) == ["added 1: milk"]
     assert run(["due", "1", "2026-11-01"], store) == ["[ ] 1: milk (due 2026-11-01) #home"]
+
+
+def test_show_prints_list_format_line():
+    assert run(["add", "milk", "show", "1"]) == [
+        "added 1: milk",
+        "[ ] 1: milk",
+    ]
+
+
+def test_show_prints_done_todo():
+    assert run(["add", "milk", "done", "1", "show", "1"]) == [
+        "added 1: milk",
+        "done 1",
+        "[x] 1: milk",
+    ]
+
+
+def test_show_prints_priority_markers():
+    assert run(["add", "urgent", "priority", "high", "show", "1"]) == [
+        "added 1: urgent",
+        "! [ ] 1: urgent",
+    ]
+    assert run(["add", "later", "priority", "low", "show", "1"]) == [
+        "added 1: later",
+        "↓ [ ] 1: later",
+    ]
+
+
+def test_show_prints_recurrence_and_due_suffixes():
+    future = date.today() + timedelta(days=7)
+    past = date.today() - timedelta(days=1)
+    assert run(["add", "water plants", "every", "3d", "show", "1"]) == [
+        "added 1: water plants",
+        "[ ] 1: water plants (every 3d)",
+    ]
+    assert run(["add", "milk", "due", str(future), "show", "1"]) == [
+        "added 1: milk",
+        f"[ ] 1: milk (due {future.isoformat()})",
+    ]
+    assert run(["add", "old", "due", str(past), "show", "1"]) == [
+        "added 1: old",
+        f"[ ] 1: old (due {past.isoformat()}, OVERDUE)",
+    ]
+
+
+def test_show_matches_list_line():
+    future = date.today() + timedelta(days=7)
+    args = ["add", "water plants", "every", "weekly", "due", str(future), "priority", "high"]
+    assert run([*args, "show", "1"]) == run([*args, "list"])
+
+
+def test_show_missing_id_reports_error():
+    assert run(["show"]) == ["error: missing id"]
+    assert run(["add", "milk", "show", "list"]) == [
+        "added 1: milk",
+        "error: missing id",
+        "[ ] 1: milk",
+    ]
+
+
+def test_show_invalid_id_reports_error_and_continues():
+    assert run(["show", "abc", "count"]) == [
+        "error: invalid id 'abc'",
+        "open 0, done 0",
+    ]
+
+
+def test_show_unknown_id_reports_error_and_continues():
+    assert run(["add", "milk", "show", "99", "list"]) == [
+        "added 1: milk",
+        "error: no todo 99",
+        "[ ] 1: milk",
+    ]
+
+
+def test_show_is_not_a_list_filter():
+    assert run(["add", "milk", "list", "show"]) == [
+        "added 1: milk",
+        "[ ] 1: milk",
+        "error: missing id",
+    ]
