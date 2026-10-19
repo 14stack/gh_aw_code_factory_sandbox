@@ -111,6 +111,25 @@ todo add "buy milk" tag shopping tag errands list
 # [ ] 1: buy milk #errands #shopping
 ```
 
+## Renaming a tag
+
+`todo retag <old> <new>` replaces the tag `<old>` with `<new>` on every todo, open or done, and saves the change. It
+prints `retagged <n> todo(s)`, where `<n>` is the number of todos that carried `<old>`. A todo that already has
+`<new>` ends with a single `<new>`, and tags stay alphabetical. When no todo carries `<old>`, or when `<old>` equals
+`<new>`, it prints `retagged 0 todo(s)` and changes nothing.
+
+```bash
+todo retag work office
+# retagged 2 todo(s)
+todo retag work work
+# retagged 0 todo(s)
+```
+
+An invalid `<old>` or `<new>` prints `error: invalid tag '<word>'` for the first invalid word and changes no todo. A
+missing argument prints `error: missing tag`. A following command keyword is not a tag word, so `todo retag list`
+and `todo retag work list` report `error: missing tag` and then run `list`. In every error case the rest of the
+command chain still runs.
+
 ## Counting todos per tag
 
 `todo tags` prints one line per tag in use, as `#<tag> <open> open, <done> done`, sorted alphabetically by tag name.

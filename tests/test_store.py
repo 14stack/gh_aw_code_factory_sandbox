@@ -600,3 +600,67 @@ def test_complete_recurring_spawn_inherits_tags():
     store.add("water plants", recurrence="3d", tags=["home", "garden"])
     store.complete(1)
     assert store.get(2).tags == ("garden", "home")
+
+
+def test_retag_replaces_tag_across_todos():
+    store = TodoStore()
+    store.add("milk", tags=["home", "shoping"])
+    store.add("bread", tags=["shoping"])
+    store.add("report", tags=["work"])
+    assert store.retag("shoping", "shopping") == 2
+    assert store.get(1).tags == ("home", "shopping")
+    assert store.get(2).tags == ("shopping",)
+    assert store.get(3).tags == ("work",)
+
+
+def test_retag_includes_done_todos():
+    store = TodoStore()
+    store.add("milk", tags=["shoping"])
+    store.complete(1)
+    assert store.retag("shoping", "shopping") == 1
+    assert store.get(1).done is True
+    assert store.get(1).tags == ("shopping",)
+
+
+def test_retag_dedupes_when_new_tag_already_present():
+    store = TodoStore()
+    store.add("milk", tags=["home", "shoping", "shopping"])
+    assert store.retag("shoping", "shopping") == 1
+    assert store.get(1).tags == ("home", "shopping")
+
+
+def test_retag_keeps_tags_sorted():
+    store = TodoStore()
+    store.add("milk", tags=["work", "aaa"])
+    assert store.retag("work", "zzz") == 1
+    assert store.get(1).tags == ("aaa", "zzz")
+
+
+def test_retag_without_match_returns_zero():
+    store = TodoStore()
+    store.add("milk", tags=["home"])
+    assert store.retag("work", "office") == 0
+    assert store.get(1).tags == ("home",)
+
+
+def test_retag_same_word_returns_zero_and_keeps_tags():
+    store = TodoStore()
+    store.add("milk", tags=["home", "work"])
+    assert store.retag("home", "home") == 0
+    assert store.get(1).tags == ("home", "work")
+
+
+def test_retag_rejects_invalid_old_tag():
+    store = TodoStore()
+    store.add("milk", tags=["home"])
+    with pytest.raises(ValueError):
+        store.retag("Home", "work")
+    assert store.get(1).tags == ("home",)
+
+
+def test_retag_rejects_invalid_new_tag():
+    store = TodoStore()
+    store.add("milk", tags=["home"])
+    with pytest.raises(ValueError):
+        store.retag("home", "no spaces")
+    assert store.get(1).tags == ("home",)

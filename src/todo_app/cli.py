@@ -33,6 +33,7 @@ _COMMANDS = frozenset(
         "tags",
         "prio",
         "due",
+        "retag",
         "export",
     }
 )
@@ -316,6 +317,34 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 continue
             for todo in store.list(priority=priority, status=status, tags=tags):
                 out.append(_format_todo(todo))
+        elif cmd == "retag":
+            # Following command keywords are not tag words, so they stay commands.
+            words: list[str] = []
+            error = None
+            i += 1
+            for _ in range(2):
+                has_token = i < len(args) and args[i] not in _COMMANDS
+                if not has_token:
+                    error = "error: missing tag"
+                    break
+                words.append(args[i])
+                i += 1
+            if error is not None:
+                out.append(error)
+                continue
+            old, new = words
+            invalid = None
+            for word in (old, new):
+                try:
+                    normalize_tags((word,))
+                except ValueError:
+                    invalid = word
+                    break
+            if invalid is not None:
+                out.append(f"error: invalid tag {invalid!r}")
+                continue
+            count = store.retag(old, new)
+            out.append(f"retagged {count} todo(s)")
         elif cmd == "find":
             # A following command keyword is not the search text, so it stays a command.
             has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
