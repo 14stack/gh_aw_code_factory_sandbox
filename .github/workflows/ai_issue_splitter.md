@@ -22,20 +22,21 @@ permissions:
 imports:
   - shared/factory-base.md
 engine:
-  id: copilot
+  # Experiment (claude/pi-harness): the Pi coding agent instead of the Copilot CLI, same OpenRouter route and model.
+  # The literal "openrouter/" prefix names Pi's provider; the rest is the OpenRouter model id or preset.
+  id: pi
+  model: openrouter/${{ vars.FACTORY_MODEL || '@preset/factory-deepseek' }}
+  model-provider: openai
   env:
-    # BYOK: route the Copilot CLI to OpenRouter instead of GitHub's Copilot backend (SPEC §8).
-    COPILOT_PROVIDER_BASE_URL: "https://openrouter.ai/api/v1"
-    COPILOT_PROVIDER_TYPE: openai
-    COPILOT_PROVIDER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-    COPILOT_MODEL: ${{ vars.FACTORY_MODEL || 'deepseek/deepseek-v4.1-flash-1017' }}
+    OPENAI_BASE_URL: https://openrouter.ai/api/v1
+    OPENAI_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    CODEX_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}  # the Pi gateway reads its key from CODEX_API_KEY
+  config: |
+    {"settings": {"defaultThinkingLevel": "medium"},
+     "model": {"reasoning": true, "contextWindow": 128000, "maxTokens": 32000}}
 sandbox:
   agent:
-    model-fallback: false  # pass the OpenRouter model slug through verbatim
-    targets:
-      copilot:
-        extra-headers:
-          x-openrouter-title: gh_aw_code_factory
+    model-fallback: false
 network:
   allowed: [defaults, openrouter.ai]
 timeout-minutes: 20
@@ -75,6 +76,15 @@ jobs:
           gh workflow run ai_orchestrator.yml --repo "$GITHUB_REPOSITORY" -f issue="$ISSUE" -f finished_run="$RUN_ID" \
             -f reason="after Splitter"
 safe-outputs:
+  # Threat detection stays on the Copilot CLI with the BYOK route (Pi's default detector needs Copilot credentials).
+  threat-detection:
+    engine:
+      id: copilot
+      env:
+        COPILOT_PROVIDER_BASE_URL: "https://openrouter.ai/api/v1"
+        COPILOT_PROVIDER_TYPE: openai
+        COPILOT_PROVIDER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        COPILOT_MODEL: ${{ vars.FACTORY_MODEL || 'deepseek/deepseek-v4.1-flash-1017' }}
   jobs:
     # Deterministic half (agents/ai_issue_splitter/apply.py): validates the plan, then creates the story branch,
     # sub-issues, native sub-issue links, blocked-by dependencies and the draft story PR.
@@ -134,7 +144,7 @@ safe-outputs:
           uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
           with:
             repository: ${{ github.repository_owner }}/gh_aw_code_factory
-            ref: ${{ vars.FACTORY_REF || 'claude/charming-knuth-6m2xdz' }}
+            ref: ${{ vars.FACTORY_REF || 'claude/pi-harness' }}
             token: ${{ steps.app.outputs.token }}
             path: .factory
             persist-credentials: false
