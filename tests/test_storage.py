@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from todo_app import StorageError, Todo
+from todo_app import StorageError, Todo, TodoStore
 from todo_app.storage import default_path, document, load, save
 
 
@@ -413,3 +413,15 @@ def test_load_rejects_invalid_tags(tmp_path, tags):
     )
     with pytest.raises(StorageError, match=r"todo 1: .*tag"):
         load(path)
+
+
+def test_store_with_path_persists_retag(tmp_path):
+    path = tmp_path / "todos.json"
+    store = TodoStore(path)
+    store.add("milk", tags=["shoping"])
+    store.add("bread", tags=["home"])
+    assert store.retag("shoping", "shopping") == 1
+
+    reloaded = TodoStore(path)
+    assert reloaded.get(1).tags == ("shopping",)
+    assert reloaded.get(2).tags == ("home",)
