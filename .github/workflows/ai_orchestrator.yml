@@ -83,7 +83,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ github.repository_owner }}/gh_aw_code_factory
-          ref: ${{ vars.FACTORY_REF || 'claude/charming-knuth-6m2xdz' }}
+          ref: ${{ vars.FACTORY_REF || 'claude/pi-harness' }}
           token: ${{ steps.app.outputs.token }}
           path: .factory
           persist-credentials: false
