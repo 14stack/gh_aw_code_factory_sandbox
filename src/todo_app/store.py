@@ -148,6 +148,17 @@ class TodoStore:
         done_count = sum(1 for todo in self._todos.values() if todo.done)
         return open_count, done_count
 
+    def tag_counts(self) -> list[tuple[str, int, int]]:
+        """Return ``(tag, open, done)`` counts for every tag in use, sorted by tag."""
+        counts: dict[str, list[int]] = {}
+        for todo in self._todos.values():
+            for tag in todo.tags:
+                counts.setdefault(tag, [0, 0])[1 if todo.done else 0] += 1
+        return [
+            (tag, open_count, done_count)
+            for tag, (open_count, done_count) in sorted(counts.items())
+        ]
+
     def list(
         self,
         *,
