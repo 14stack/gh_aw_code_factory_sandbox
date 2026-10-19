@@ -23,9 +23,10 @@ imports:
   - shared/factory-base.md
 engine:
   # Experiment (claude/pi-harness): the Pi coding agent instead of the Copilot CLI, same OpenRouter route and model.
-  # The literal "openrouter/" prefix names Pi's provider; the rest is the OpenRouter model id or preset.
+  # The literal "openrouter/" prefix names Pi's provider; the rest is the OpenRouter model id or preset. No quoted
+  # fallback: gh-aw embeds the expression in a single-quoted shell command, where quotes break it.
   id: pi
-  model: openrouter/${{ vars.FACTORY_MODEL_CODE || vars.FACTORY_MODEL || '@preset/factory-deepseek' }}
+  model: openrouter/${{ vars.FACTORY_MODEL_CODE || vars.FACTORY_MODEL }}
   model-provider: openai
   env:
     OPENAI_BASE_URL: https://openrouter.ai/api/v1
