@@ -1180,3 +1180,80 @@ def test_show_is_not_a_list_filter():
         "[ ] 1: milk",
         "error: missing id",
     ]
+
+
+def test_retag_reports_count_and_chain_continues():
+    args = [
+        "add",
+        "milk",
+        "tag",
+        "work",
+        "add",
+        "spec",
+        "tag",
+        "work",
+        "retag",
+        "work",
+        "home",
+        "count",
+    ]
+    assert run(args) == [
+        "added 1: milk",
+        "added 2: spec",
+        "retagged 2 todo(s)",
+        "open 2, done 0",
+    ]
+
+
+def test_retag_changes_done_todos():
+    assert run(["add", "milk", "tag", "work", "done", "1", "retag", "work", "home", "list"]) == [
+        "added 1: milk",
+        "done 1",
+        "retagged 1 todo(s)",
+        "[x] 1: milk #home",
+    ]
+
+
+def test_retag_invalid_old_tag_changes_nothing_and_continues():
+    assert run(["add", "milk", "tag", "work", "retag", "Work", "home", "list"]) == [
+        "added 1: milk",
+        "error: invalid tag 'Work'",
+        "[ ] 1: milk #work",
+    ]
+
+
+def test_retag_invalid_new_tag_changes_nothing_and_continues():
+    assert run(["add", "milk", "tag", "work", "retag", "work", "Home", "list"]) == [
+        "added 1: milk",
+        "error: invalid tag 'Home'",
+        "[ ] 1: milk #work",
+    ]
+
+
+def test_retag_missing_first_argument_reports_error():
+    assert run(["retag"]) == ["error: missing tag"]
+
+
+def test_retag_missing_second_argument_reports_error_and_continues():
+    assert run(["add", "milk", "tag", "work", "retag", "work", "count"]) == [
+        "added 1: milk",
+        "error: missing tag",
+        "open 1, done 0",
+    ]
+
+
+def test_retag_does_not_consume_following_command():
+    assert run(["retag", "list"]) == ["error: missing tag"]
+    assert run(["add", "milk", "tag", "work", "retag", "work", "list"]) == [
+        "added 1: milk",
+        "error: missing tag",
+        "[ ] 1: milk #work",
+    ]
+
+
+def test_retag_same_tag_reports_zero():
+    assert run(["add", "milk", "tag", "work", "retag", "work", "work", "list"]) == [
+        "added 1: milk",
+        "retagged 0 todo(s)",
+        "[ ] 1: milk #work",
+    ]
