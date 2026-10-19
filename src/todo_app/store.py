@@ -130,6 +130,21 @@ class TodoStore:
         self._save()
         return todo
 
+    def retag(self, old: str, new: str) -> int:
+        """Replace tag ``old`` with ``new`` on every todo, returning how many changed."""
+        normalize_tags((old,))
+        normalize_tags((new,))
+        if old == new:
+            return 0
+        changed = 0
+        for todo in self._todos.values():
+            if old not in todo.tags:
+                continue
+            todo.tags = normalize_tags((set(todo.tags) - {old}) | {new})
+            changed += 1
+        self._save()
+        return changed
+
     def remove(self, todo_id: int) -> None:
         self.get(todo_id)
         del self._todos[todo_id]
