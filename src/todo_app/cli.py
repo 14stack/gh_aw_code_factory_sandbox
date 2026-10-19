@@ -30,6 +30,7 @@ _COMMANDS = frozenset(
         "show",
         "clear",
         "count",
+        "tags",
         "prio",
         "due",
         "retag",
@@ -373,6 +374,10 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
         elif cmd == "count":
             open_count, done_count = store.counts()
             out.append(f"open {open_count}, done {done_count}")
+            i += 1
+        elif cmd == "tags":
+            for tag, open_count, done_count in store.tag_counts():
+                out.append(f"#{tag} {open_count} open, {done_count} done")
             i += 1
         else:
             out.append(f"error: unknown command {cmd!r}")

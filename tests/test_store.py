@@ -155,6 +155,45 @@ def test_counts_after_complete_spawns_recurrence():
     assert store.counts() == (1, 1)
 
 
+def test_tag_counts_on_empty_store():
+    assert TodoStore().tag_counts() == []
+
+
+def test_tag_counts_ignores_untagged_todos():
+    store = TodoStore()
+    store.add("milk")
+    assert store.tag_counts() == []
+
+
+def test_tag_counts_counts_open_and_done():
+    store = TodoStore()
+    store.add("a", tags=["home"])
+    store.add("b", tags=["home"])
+    store.complete(2)
+    assert store.tag_counts() == [("home", 1, 1)]
+
+
+def test_tag_counts_counts_tag_used_only_by_done_todos():
+    store = TodoStore()
+    store.add("a", tags=["home"])
+    store.complete(1)
+    assert store.tag_counts() == [("home", 0, 1)]
+
+
+def test_tag_counts_counts_multi_tag_todo_in_each_tag():
+    store = TodoStore()
+    store.add("a", tags=["home", "work"])
+    assert store.tag_counts() == [("home", 1, 0), ("work", 1, 0)]
+
+
+def test_tag_counts_sorted_by_tag_name():
+    store = TodoStore()
+    store.add("a", tags=["work"])
+    store.add("b", tags=["home"])
+    store.add("c")
+    assert [tag for tag, _, _ in store.tag_counts()] == ["home", "work"]
+
+
 def test_store_with_path_persists_add(tmp_path):
     path = tmp_path / "todos.json"
     store = TodoStore(path)
