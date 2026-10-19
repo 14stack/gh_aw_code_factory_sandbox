@@ -22,10 +22,12 @@ TODO_FILE=/path/to/todos.json todo list
 ```
 
 The file is versioned JSON (`{"version": 1, "next_id": ..., "todos": [...]}`), where `due` is an ISO date or `null`,
-`recurrence` is a string or `null` and `priority` is one of `high`, `medium` or `low`. A file written before the
-`priority` field existed still loads, with every todo at `medium` priority, and is rewritten with an explicit
-`priority` on the next save. A missing file is not an error: the first run starts with an empty list. An unreadable
-or corrupt file prints `error: cannot read <path>: <reason>` and exits non-zero without overwriting it.
+`recurrence` is a string or `null`, `priority` is one of `high`, `medium` or `low` and `tags` is a list of tag words.
+A file written before the `priority` field existed still loads, with every todo at `medium` priority, and is rewritten
+with an explicit `priority` on the next save. Likewise, a file written before the `tags` field existed loads with no
+tags and is rewritten with an explicit `tags` list on the next save. A missing file is not an error: the first run
+starts with an empty list. An unreadable or corrupt file prints `error: cannot read <path>: <reason>` and exits
+non-zero without overwriting it.
 
 See [AGENTS.md](AGENTS.md) for the commands and conventions the agents follow.
 
@@ -70,6 +72,43 @@ word. The rest of the command chain still runs.
 todo list open high
 todo list high open
 todo list bogus done 1 list
+```
+
+## Tagging todos
+
+`todo add` accepts a repeatable `tag <word>` option after the title, alongside `every`, `due` and `priority`, so one
+`add` can attach several tags. A tag is a lowercase word made of letters, digits and `-`; duplicate tags on one `add`
+are stored once.
+
+```bash
+todo add "buy milk" tag shopping tag errands
+todo add "write spec" priority high tag work
+```
+
+An invalid tag prints `error: invalid tag '<word>'` and creates no todo, and a `tag` with no word prints
+`error: missing tag`; in both cases the rest of the command chain still runs. As with `due`, a following command
+keyword is not a tag word, so `todo add "buy milk" tag list` reports `error: missing tag` and then runs `list`.
+
+`todo list tag <word>` prints only the todos carrying that tag. It combines with the status and priority filters in
+any order, and repeating `tag` requires every listed tag:
+
+```bash
+todo list tag work
+todo list tag work open high
+todo list tag work tag urgent
+```
+
+Unlike `add`, `list` consumes the word after `tag` unconditionally, so `list tag done` filters by the tag `done`
+rather than by the done status. A missing word prints `error: missing tag` and an invalid word prints
+`error: invalid tag '<word>'`; the rest of the command chain still runs.
+
+`list`, `find` and `due` lines end with the todo's tags as `#tag`, separated by spaces and in alphabetical order. A
+todo without tags has no suffix.
+
+```bash
+todo add "buy milk" tag shopping tag errands list
+# added 1: buy milk
+# [ ] 1: buy milk #errands #shopping
 ```
 
 ## Exporting todos

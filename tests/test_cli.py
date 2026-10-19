@@ -640,7 +640,7 @@ def test_export_json():
         "added 1: milk",
         '{"version": 1, "next_id": 2, "todos": ['
         '{"id": 1, "title": "milk", "done": false, "recurrence": null, '
-        '"due": null, "priority": "medium"}]}',
+        '"due": null, "priority": "medium", "tags": []}]}',
     ]
 
 
@@ -650,7 +650,7 @@ def test_export_json_in_a_command_chain():
         "done 1",
         '{"version": 1, "next_id": 2, "todos": ['
         '{"id": 1, "title": "milk", "done": true, "recurrence": null, '
-        '"due": null, "priority": "medium"}]}',
+        '"due": null, "priority": "medium", "tags": []}]}',
         "open 0, done 1",
     ]
 
@@ -873,6 +873,232 @@ def test_undo_keyword_is_command():
         "error: missing id",
         "[x] 1: milk",
     ]
+
+
+def test_add_accepts_repeatable_tags():
+    assert run(["add", "milk", "tag", "home", "tag", "shopping", "list"]) == [
+        "added 1: milk",
+        "[ ] 1: milk #home #shopping",
+    ]
+
+
+def test_add_tag_combines_with_other_options_in_any_order():
+    future = date.today() + timedelta(days=7)
+    expected = [
+        "added 1: water plants",
+        f"! [ ] 1: water plants (every 3d) (due {future.isoformat()}) #home",
+    ]
+    assert (
+        run(
+            [
+                "add",
+                "water plants",
+                "tag",
+                "home",
+                "every",
+                "3d",
+                "priority",
+                "high",
+                "due",
+                str(future),
+                "list",
+            ]
+        )
+        == expected
+    )
+    assert (
+        run(
+            [
+                "add",
+                "water plants",
+                "every",
+                "3d",
+                "due",
+                str(future),
+                "priority",
+                "high",
+                "tag",
+                "home",
+                "list",
+            ]
+        )
+        == expected
+    )
+
+
+def test_add_invalid_tag_creates_no_todo_and_chain_continues():
+    assert run(["add", "milk", "tag", "Home", "count"]) == [
+        "error: invalid tag 'Home'",
+        "open 0, done 0",
+    ]
+    assert run(["add", "milk", "tag", "no spaces", "list"]) == [
+        "error: invalid tag 'no spaces'",
+    ]
+
+
+def test_add_missing_tag_reports_error():
+    assert run(["add", "milk", "tag"]) == ["error: missing tag"]
+    assert run(["add", "milk", "tag", "list"]) == ["error: missing tag"]
+
+
+def test_add_tag_does_not_consume_following_command():
+    assert run(["add", "milk", "tag", "home", "count"]) == [
+        "added 1: milk",
+        "open 1, done 0",
+    ]
+
+
+def test_list_tag_filters_and_combines_with_status_and_priority():
+    setup = [
+        "add",
+        "work open",
+        "tag",
+        "work",
+        "priority",
+        "high",
+        "add",
+        "work done",
+        "tag",
+        "work",
+        "priority",
+        "high",
+        "add",
+        "home",
+        "tag",
+        "home",
+        "done",
+        "2",
+    ]
+    assert run([*setup, "list", "tag", "work"]) == [
+        "added 1: work open",
+        "added 2: work done",
+        "added 3: home",
+        "done 2",
+        "! [ ] 1: work open #work",
+        "! [x] 2: work done #work",
+    ]
+    assert run([*setup, "list", "tag", "work", "open", "high"]) == [
+        "added 1: work open",
+        "added 2: work done",
+        "added 3: home",
+        "done 2",
+        "! [ ] 1: work open #work",
+    ]
+    assert run([*setup, "list", "high", "tag", "work", "done"]) == [
+        "added 1: work open",
+        "added 2: work done",
+        "added 3: home",
+        "done 2",
+        "! [x] 2: work done #work",
+    ]
+
+
+def test_list_repeated_tags_require_all():
+    setup = ["add", "both", "tag", "work", "tag", "home", "add", "work", "tag", "work"]
+    assert run([*setup, "list", "tag", "work", "tag", "home"]) == [
+        "added 1: both",
+        "added 2: work",
+        "[ ] 1: both #home #work",
+    ]
+
+
+def test_list_tag_errors():
+    assert run(["add", "milk", "tag", "home", "list", "tag"]) == [
+        "added 1: milk",
+        "error: missing tag",
+    ]
+    assert run(["add", "milk", "tag", "home", "list", "tag", "Home", "count"]) == [
+        "added 1: milk",
+        "error: invalid tag 'Home'",
+        "open 1, done 0",
+    ]
+
+
+def test_list_tag_consumes_status_word_as_tag():
+    store = TodoStore()
+    store.add("milk", tags=["done"])
+    assert run(["list", "tag", "done"], store) == ["[ ] 1: milk #done"]
+
+
+def test_list_tag_combines_with_priority_in_either_order():
+    setup = [
+        "add",
+        "high work",
+        "tag",
+        "work",
+        "priority",
+        "high",
+        "add",
+        "low work",
+        "tag",
+        "work",
+        "priority",
+        "low",
+        "add",
+        "high home",
+        "tag",
+        "home",
+        "priority",
+        "high",
+    ]
+    expected = [
+        "added 1: high work",
+        "added 2: low work",
+        "added 3: high home",
+        "! [ ] 1: high work #work",
+    ]
+    assert run([*setup, "list", "tag", "work", "high"]) == expected
+    assert run([*setup, "list", "high", "tag", "work"]) == expected
+
+
+def test_list_tag_combines_with_status_in_either_order():
+    setup = [
+        "add",
+        "work open",
+        "tag",
+        "work",
+        "add",
+        "work done",
+        "tag",
+        "work",
+        "done",
+        "2",
+    ]
+    expected = [
+        "added 1: work open",
+        "added 2: work done",
+        "done 2",
+        "[ ] 1: work open #work",
+    ]
+    assert run([*setup, "list", "tag", "work", "open"]) == expected
+    assert run([*setup, "list", "open", "tag", "work"]) == expected
+
+
+def test_list_tag_does_not_swallow_following_command():
+    assert run(["add", "milk", "tag", "home", "list", "tag", "home", "count"]) == [
+        "added 1: milk",
+        "[ ] 1: milk #home",
+        "open 1, done 0",
+    ]
+
+
+def test_tag_suffixes_are_alphabetical_and_absent_when_untagged():
+    assert run(["add", "milk", "tag", "work", "tag", "home", "add", "plain", "list"]) == [
+        "added 1: milk",
+        "added 2: plain",
+        "[ ] 1: milk #home #work",
+        "[ ] 2: plain",
+    ]
+
+
+def test_find_and_due_lines_include_tag_suffixes():
+    assert run(["add", "milk", "tag", "home", "find", "milk"]) == [
+        "added 1: milk",
+        "[ ] 1: milk #home",
+    ]
+    store = TodoStore()
+    assert run(["add", "milk", "tag", "home"], store) == ["added 1: milk"]
+    assert run(["due", "1", "2026-11-01"], store) == ["[ ] 1: milk (due 2026-11-01) #home"]
 
 
 def test_show_prints_list_format_line():

@@ -16,6 +16,7 @@ from todo_app.store import (
     Todo,
     TodoNotFoundError,
     TodoStore,
+    normalize_tags,
 )
 
 _COMMANDS = frozenset(
@@ -99,6 +100,8 @@ def _format_todo(todo: Todo) -> str:
     if todo.due is not None:
         overdue = ", OVERDUE" if todo.due < date.today() else ""
         line += f" (due {todo.due.isoformat()}{overdue})"
+    if todo.tags:
+        line += " " + " ".join(f"#{tag}" for tag in sorted(todo.tags))
     return line
 
 
@@ -114,9 +117,10 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             recurrence: str | None = None
             due: date | None = None
             priority: str | None = None
+            tags: list[str] = []
             i += 2
             error: str | None = None
-            while i < len(args) and args[i] in ("every", "due", "priority"):
+            while i < len(args) and args[i] in ("every", "due", "priority", "tag"):
                 keyword = args[i]
                 if keyword == "every":
                     if i + 1 >= len(args):
@@ -134,6 +138,19 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                     if priority is None:
                         error = f"error: invalid priority {token!r}"
                         break
+                elif keyword == "tag":
+                    # A following command keyword is not a tag word, so it stays a command.
+                    has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
+                    token = args[i + 1] if has_token else ""
+                    i += 2 if has_token else 1
+                    if not has_token:
+                        error = "error: missing tag"
+                        break
+                    try:
+                        tags.extend(normalize_tags([token]))
+                    except ValueError:
+                        error = f"error: invalid tag {token!r}"
+                        break
                 else:
                     # A following command keyword is not a due date, so it stays a command.
                     has_token = i + 1 < len(args) and args[i + 1] not in _COMMANDS
@@ -147,7 +164,11 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
                 out.append(error)
                 continue
             todo = store.add(
-                title, recurrence=recurrence, due=due, priority=priority or DEFAULT_PRIORITY
+                title,
+                recurrence=recurrence,
+                due=due,
+                priority=priority or DEFAULT_PRIORITY,
+                tags=tags,
             )
             out.append(f"added {todo.id}: {todo.title}")
         elif cmd in ("done", "rm"):
@@ -266,12 +287,24 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             # ``done`` directly after ``list`` is a status filter, not the command.
             status: str | None = None
             priority: str | None = None
+            tags: list[str] = []
             errors: list[str] = []
             i += 1
             while i < len(args) and (args[i] not in _COMMANDS or args[i] == "done"):
                 token = args[i]
                 i += 1
-                if token in STATUSES and status is None:
+                if token == "tag":
+                    # ``tag`` consumes the next token unconditionally as the tag word.
+                    if i >= len(args):
+                        errors.append("error: missing tag")
+                        break
+                    word = args[i]
+                    i += 1
+                    try:
+                        tags.extend(normalize_tags([word]))
+                    except ValueError:
+                        errors.append(f"error: invalid tag {word!r}")
+                elif token in STATUSES and status is None:
                     status = token
                 elif _parse_priority(token) is not None and priority is None:
                     priority = token
@@ -280,7 +313,7 @@ def run(args: list[str], store: TodoStore | None = None) -> list[str]:
             if errors:
                 out.extend(errors)
                 continue
-            for todo in store.list(priority=priority, status=status):
+            for todo in store.list(priority=priority, status=status, tags=tags):
                 out.append(_format_todo(todo))
         elif cmd == "find":
             # A following command keyword is not the search text, so it stays a command.
