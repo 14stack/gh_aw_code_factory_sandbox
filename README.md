@@ -111,6 +111,19 @@ todo add "buy milk" tag shopping tag errands list
 # [ ] 1: buy milk #errands #shopping
 ```
 
+## Counting todos per tag
+
+`todo tags` prints one line per tag in use, as `#<tag> <open> open, <done> done`, sorted alphabetically by tag name.
+Open and done todos both count, and a todo with several tags counts once in each. Tags that no todo carries never
+appear, so with no tagged todos the command prints nothing.
+
+```bash
+todo add "buy milk" tag shopping done 1 tags
+# added 1: buy milk
+# done 1
+# #shopping 0 open, 1 done
+```
+
 ## Exporting todos
 
 `todo export [md|csv|json]` prints every todo, open and done, in `list` order. Nothing is written to disk, so
