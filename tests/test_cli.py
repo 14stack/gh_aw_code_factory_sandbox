@@ -1180,3 +1180,68 @@ def test_show_is_not_a_list_filter():
         "[ ] 1: milk",
         "error: missing id",
     ]
+
+
+def test_tags_prints_open_and_done_counts_alphabetically():
+    assert run(
+        [
+            "add",
+            "milk",
+            "tag",
+            "work",
+            "add",
+            "bread",
+            "tag",
+            "home",
+            "add",
+            "eggs",
+            "tag",
+            "home",
+            "done",
+            "3",
+            "tags",
+        ]
+    ) == [
+        "added 1: milk",
+        "added 2: bread",
+        "added 3: eggs",
+        "done 3",
+        "#home 1 open, 1 done",
+        "#work 1 open, 0 done",
+    ]
+
+
+def test_tags_on_empty_store_prints_nothing():
+    assert run(["tags"]) == []
+
+
+def test_tags_ignores_untagged_todos():
+    assert run(["add", "milk", "add", "bread", "tags"]) == [
+        "added 1: milk",
+        "added 2: bread",
+    ]
+
+
+def test_tags_chains_with_count_and_list():
+    assert run(["add", "milk", "tag", "home", "tags", "count", "list"]) == [
+        "added 1: milk",
+        "#home 1 open, 0 done",
+        "open 1, done 0",
+        "[ ] 1: milk #home",
+    ]
+
+
+def test_tags_is_not_consumed_as_tag_argument():
+    assert run(["add", "milk", "tag", "tags"]) == ["error: missing tag"]
+
+
+def test_tags_is_not_consumed_as_due_argument():
+    assert run(["add", "milk", "due", "tags"]) == ["error: invalid due date ''"]
+
+
+def test_tags_is_not_consumed_as_export_argument():
+    assert run(["add", "milk", "tag", "home", "export", "tags"]) == [
+        "added 1: milk",
+        "- [ ] 1: milk",
+        "#home 1 open, 0 done",
+    ]
